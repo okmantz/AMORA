@@ -29,7 +29,7 @@ export const portraitList = () => DB;
 export const portraitById = (id) => DB.find((p) => p.id === id) || null;
 export const portraitSrc = (p) => BASE + p.file;
 /** CSS object-position that keeps the face centred when the image is cropped square. */
-export const portraitFocus = (p) => (p.crop === 'face' ? '50% 32%' : '50% 16%');
+export const portraitFocus = (p) => (p.crop === 'face' ? '50% 32%' : p.crop === 'full' ? '50% 2%' : '50% 16%');
 
 export const AGE_BANDS = [['young', 'Young adult', 25], ['mid', 'Thirties–forties', 38], ['mature', 'Fifties', 52], ['senior', 'Sixties+', 66]];
 export const ageBand = (age) => (age >= 60 ? 'senior' : age >= 45 ? 'mature' : age >= 30 ? 'mid' : 'young');
@@ -64,6 +64,7 @@ function score(ref, p) {
   s += ref.age === p.age ? 5 : -Math.abs(AGE_BANDS.findIndex((b) => b[0] === ref.age) - AGE_BANDS.findIndex((b) => b[0] === p.age)) * 4;
   if (ref.freckles && p.freckles) s += 1;
   if (p.crop === 'bust') s += 1.8; // taller, higher-resolution frames look best at large sizes
+  if (p.crop === 'full') s -= 3;   // full-length frames are never auto-picked over a matching portrait; pin one to use it
   return s;
 }
 

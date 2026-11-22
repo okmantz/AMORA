@@ -1,5 +1,5 @@
 // AMORA service worker — precaches the app shell so it works fully offline.
-const VERSION = 'amora-v3.1.1';
+const VERSION = 'amora-v3.1.2';
 const SHELL = [
   './',
   'index.html',

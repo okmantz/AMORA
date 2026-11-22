@@ -60,10 +60,14 @@ export function render(A) {
       const chipRow = (key, opts, label) => h('div', { class: 'pgal-bar', role: 'group', 'aria-label': label }, h('button', { class: `chip${galState[key] == null ? ' on' : ''}`, onclick: () => { galState[key] = null; paintGallery(); } }, 'Any'), opts.map(([v, l]) => h('button', { class: `chip${galState[key] === v ? ' on' : ''}`, onclick: () => { galState[key] = galState[key] === v ? null : v; paintGallery(); } }, l)));
       const ranked = rankPortraits(p).filter((x) => (galState.skin == null || x.skin === galState.skin) && (galState.body == null || x.body === galState.body) && (galState.age == null || x.age === galState.age));
       const grid = h('div', { class: 'pgal', role: 'listbox', 'aria-label': 'Portraits' });
-      ranked.forEach((x) => {
+      const fullGrid = h('div', { class: 'pgal full', role: 'listbox', 'aria-label': 'Full-body portraits' });
+      const thumb = (x) => {
         const on = current && current.id === x.id;
-        grid.append(h('button', { type: 'button', role: 'option', 'aria-selected': String(!!on), class: `pthumb${on ? ' on' : ''}${on && !pinned ? ' auto' : ''}`, title: x.label, onclick: () => pin(x) }, h('img', { src: portraitSrc(x), alt: x.label, loading: 'lazy', decoding: 'async', style: { objectPosition: portraitFocus(x) } })));
-      });
+        return h('button', { type: 'button', role: 'option', 'aria-selected': String(!!on), class: `pthumb${x.crop === 'full' ? ' full' : ''}${on ? ' on' : ''}${on && !pinned ? ' auto' : ''}`, title: x.label, onclick: () => pin(x) }, h('img', { src: portraitSrc(x), alt: x.label, loading: 'lazy', decoding: 'async', style: { objectPosition: x.crop === 'full' ? '50% 0%' : portraitFocus(x) } }));
+      };
+      const heads = ranked.filter((x) => x.crop !== 'full'), bodies = ranked.filter((x) => x.crop === 'full');
+      heads.forEach((x) => grid.append(thumb(x)));
+      bodies.forEach((x) => fullGrid.append(thumb(x)));
       if (!ranked.length) grid.append(h('p', { class: 'muted' }, 'No portraits match these filters — try “Any”.'));
       galWrap.append(
         h('div', { class: 'photo-note' }, icon('sparkle', 16), h('span', pinned ? `Pinned portrait: ${pinned.label}. Changing the look options below goes back to auto-matching.` : 'She automatically matches the closest portrait to the look you set below. Tap any portrait to pin it.')),
@@ -73,7 +77,9 @@ export function render(A) {
         h('span', { class: 'label' }, 'Skin tone'), chipRow('skin', OPTIONS.skin.map((s, i) => [i, s[1]]), 'Filter by skin tone'),
         h('span', { class: 'label' }, 'Body type'), chipRow('body', OPTIONS.bodyType, 'Filter by body type'),
         h('span', { class: 'label' }, 'Age'), chipRow('age', AGE_BANDS.map((b) => [b[0], b[1]]), 'Filter by age'),
-        grid);
+        grid,
+        bodies.length ? h('span', { class: 'label', style: { marginTop: '14px' } }, `Full-body (${bodies.length}) — her avatar crops to head and shoulders; photos show the full frame`) : null,
+        bodies.length ? fullGrid : null);
     }
     function pin(x) {
       L.avatarKind = 'photo'; L.portraitId = x.id;
@@ -87,7 +93,7 @@ export function render(A) {
     }
 
     const randomize = () => {
-      const pool = portraitList();
+      const pool = portraitList().filter((x) => x.crop !== 'full');
       if (portraitsReady()) { const x = pool[Math.floor(Math.random() * pool.length)]; Object.assign(L, { outfit: rnd(OPTIONS.outfit.filter((o) => ['tee', 'sweater', 'hoodie', 'blazer', 'sundress', 'dress', 'offshoulder', 'camisole'].includes(o[0])))[0], outfitColor: rnd(OPTIONS.outfitColors), accessory: rnd(OPTIONS.accessory)[0], aesthetic: rnd(OPTIONS.aesthetic)[0], eyeColor: rnd(OPTIONS.eyeColor)[0], makeup: rnd(OPTIONS.makeup)[0], lip: rnd(OPTIONS.lipColor) }); pin(x); }
     };
     paintGallery();

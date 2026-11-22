@@ -352,3 +352,8 @@ html.d-blur .hit:hover, html.d-blur .item .t small:hover { filter: none; }
 .dcy-key:active { filter: brightness(1.4); } .dcy-key.op { background: #ff9f0a; } .dcy-key.zero { grid-column: span 2; aspect-ratio: auto; text-align: left; padding-left: 8.5%; }
 .dcy.dcy-calc { background: #1c1c1e; } .dcy.dcy-calc .dcy-head { color: #8e8e93; border-color: #2c2c2e; background: #1c1c1e; }
 @media (max-width: 560px) { .dcy-split { grid-template-columns: 1fr; grid-template-rows: auto 1fr; } .dcy-list { border-right: 0; border-bottom: 1px solid #e5e5ea; max-height: 36vh; } }
+
+/* full-body portraits in the gallery */
+.pgal.full { grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); max-height: 640px; }
+.pthumb.full { aspect-ratio: 2 / 5; border-radius: 12px; }
+.pthumb.full img { object-fit: cover; object-position: 50% 0%; }
