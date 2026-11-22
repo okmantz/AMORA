@@ -116,3 +116,10 @@ Base style for every portrait: *photorealistic studio portrait of an adult woman
 - `p112.jpg` — Auburn waves: adult woman in her early 50s, warm beige skin tone, wavy hair, average build.
 - `p113.jpg` — Silver-blonde waves: adult woman in her late 60s, fair skin tone, wavy hair, average build.
 - `p114.jpg` — Silver curls: adult woman in her late 60s, porcelain skin tone, wavy hair, average build.
+
+- `p115.jpg` — Freckled golden blonde: adult woman in her mid 20s, hair as described, average build (cut from the expanded diversity sheet).
+- `p116.jpg` — Gray curls, warm tan: adult woman in her late 50s, hair as described, average build (cut from the expanded diversity sheet).
+- `p117.jpg` — Golden-blonde waves: adult woman in her mid 20s, hair as described, average build (cut from the expanded diversity sheet).
+- `p118.jpg` — Sun-kissed blonde: adult woman in her mid 20s, hair as described, average build (cut from the expanded diversity sheet).
+- `p119.jpg` — Black waves, tan: adult woman in her mid 20s, hair as described, average build (cut from the expanded diversity sheet).
+- `p120.jpg` — Dark auburn curls: adult woman in her late 30s, hair as described, average build (cut from the expanded diversity sheet).
