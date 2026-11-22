@@ -5,6 +5,13 @@ A premium, mobile-messaging-style web app where you build a fictional companion 
 > **Honest by design.** AMORA contains **no AI, no language model, no backend and no tracking.** Every reply is built by a hand-written rule engine from a dialogue database, your personality settings and a small local memory. She does not understand language the way a person does, and she says so. Everything is stored in your browser's `localStorage`. The only optional network feature is **Knowledge lookup** (Wikipedia / dictionary), which is **off by default** and sends only the subject of your question.
 > AMORA is for adults only (18+). Characters are always adults.
 
+## What's new in v3 — realistic photo avatar
+
+- **Real-looking avatar, not a drawing.** Her avatar and every photo she sends are now realistic portrait photographs (`assets/portraits/`, 114 images of fictional adult women) instead of the old drawn SVG art. The drawn engine remains only as an automatic fallback if the images can't load.
+- **Customizable like a model sheet.** In **Her → Look**, skin tone, hairstyle, hair color, body type, freckles and age drive an auto-matcher that picks the closest portrait live. Or open the **portrait gallery**: filter by skin tone / body type / age, tap to pin any portrait, or hit **Shuffle similar**.
+- **Same woman everywhere.** Header, chat bubbles, Us tab and photo messages all use her one matched portrait. If a photo is requested at a lower content level than the frame shows, it is cropped in to her face and shoulders rather than swapping in someone else.
+- **Bring your own.** Upload your own image in **Her → Look → Upload your own photo**, or replace the files in `assets/portraits/` (see `assets/portraits/README.md`) — higher-resolution versions with the same file names drop straight in.
+
 ## What's new in v2
 
 - **Accounts** — create a username + password on first launch; every companion, setting, memory and chat is saved under your account on this device. Passwords are hashed with PBKDF2-SHA256 (150k iterations) and never stored in plain text. Switch accounts or log out in **Settings → Account**.
@@ -18,7 +25,7 @@ A premium, mobile-messaging-style web app where you build a fictional companion 
 | Area | What you get |
 |---|---|
 | **Design** | Luxury rose/gold aesthetic, light + dark + auto themes, 12 accent colors + custom picker, 3 typefaces, text-size slider, 3 bubble styles, 8 chat backgrounds, pattern overlays, your own background image (blur/dim), reduced-motion option, fully responsive (desktop rail, mobile tab bar) |
-| **Her** | Name, age (18+), bio, procedural SVG avatar (14 hairstyles, 14 outfits, 5 body types, makeup, freckles, 11 live expressions), monogram or uploaded avatar |
+| **Her** | Name, age (18+), bio, **photoreal portrait avatar** (114-portrait library, auto-match by skin tone / hair / body type / age, gallery with filters and pinning), your own uploaded photo or monogram |
 | **Personality** | 14 trait sliders (spice, dominance, mischief plus affection, humor, sarcasm, intelligence, playfulness, romance, confidence, shyness, expressiveness, curiosity, empathy) — each changes which lines are chosen |
 | **Interests** | Hobbies, music, movies, books, activities, foods — used in her own opinions and answers |
 | **Style** | Vocabulary (casual / sweet / poetic / playful / refined …), response length 1–5, emoji frequency and favorites, pet names, flirt frequency, catchphrases, lowercase typing |
@@ -83,7 +90,8 @@ js/app.js                   state, persistence, theming, navigation, send/reply 
 js/core/                    util, store (per-account localStorage), auth (PBKDF2), lookup (opt-in), io
 js/engine/                  engine, intents, spice (photos/heat/lookup), tools (calc/convert/dice), topics, templates, style, memory, rules, relationship, text
 js/data/                    dialogue.js, spice.js, range.js (intent pools), topics-data.js, topics-extra.js, facts.js, system-data.js, presets.js
-js/ui/                      chat, her, dialogue, memory, journal, history, settings, onboarding, auth, portrait, avatar, dom
+js/ui/                      chat, her, dialogue, memory, journal, history, settings, onboarding, auth, photoreal (portrait library + matcher), avatar, portrait (drawn fallback), dom
+assets/portraits/           114 portrait images + manifest.json (see its README)
 tests/                      engine.test.mjs (npm test), play.mjs (interactive harness)
 docs/                       EXTENDING.md (add dialogue, intents, topics, rules), ENGINE.md (how replies are built)
 .github/workflows/pages.yml GitHub Pages deployment
@@ -102,7 +110,7 @@ printf "hi\nI love hiking\nwhat do you know about me?\n" | node tests/play.mjs l
 
 ## Content & limits (read this)
 
-- **Photos are illustrations** drawn by the app from her look — not real or AI-generated photographs.
+- **Photos are portraits of fictional adults** (AI-generated imagery, not photographs of real people). Expressions can't change a photograph, so they tint her avatar glow and add subtle motion instead.
 - The **Spicy** tier means lingerie, swimwear and boudoir poses. She stays **covered**; nude requests get an in-character no and a covered photo.
 - Steamy dialogue is suggestive but **not graphic** and fades to black. All characters are 18+.
 - "Anything" is bounded: without an LLM she can chat about ~40 topics, do maths/conversions, and answer many common facts offline. Turn on **Knowledge lookup** for Wikipedia/dictionary answers; otherwise she says honestly when something is beyond her.

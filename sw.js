@@ -1,5 +1,5 @@
 // AMORA service worker — precaches the app shell so it works fully offline.
-const VERSION = 'amora-v2.0.0';
+const VERSION = 'amora-v3.0.0';
 const SHELL = [
   './',
   'index.html',
@@ -10,6 +10,7 @@ const SHELL = [
   'icons/maskable-512.png',
   'icons/apple-touch-icon.png',
   'css/styles.css',
+  'assets/portraits/manifest.json',
   'js/app.js',
   'js/core/auth.js',
   'js/core/io.js',
@@ -45,6 +46,7 @@ const SHELL = [
   'js/ui/journal.js',
   'js/ui/memory.js',
   'js/ui/onboarding.js',
+  'js/ui/photoreal.js',
   'js/ui/portrait.js',
   'js/ui/settings.js',
 ];
