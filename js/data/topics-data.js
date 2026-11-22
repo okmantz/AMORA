@@ -183,3 +183,6 @@ export const TOPIC_RETURN = [
   "Wait, can I go back to {topic} for a sec?",
   "Okay, but back to {topic} — I'm not done with that.",
 ];
+
+import { EXTRA_DATA } from './topics-extra.js';
+Object.assign(TOPIC_DATA, EXTRA_DATA);

@@ -2,7 +2,7 @@
 import { h } from '../core/util.js';
 import { PRESETS, fromPreset } from '../data/presets.js';
 import { avatarEl } from './avatar.js';
-import { modal, icon } from './dom.js';
+import { modal, icon, fChips } from './dom.js';
 
 export function onboarding(A) {
   return new Promise((resolve) => {
@@ -20,10 +20,11 @@ export function onboarding(A) {
       h('div', { class: 'logo' }, 'AMORA'),
       h('p', { class: 'muted' }, 'A customizable virtual companion who lives entirely on your device.'),
       h('div', { class: 'card', style: { textAlign: 'left', marginTop: '14px', marginBottom: '10px' } },
-        h('p', { style: { margin: 0, fontSize: '.92rem' } }, h('b', 'Please note: '), 'AMORA is a fictional character powered by hand-written rules and templates — ', h('b', 'not AI'), '. She can chat about everyday things, remember what you tell her and react to your mood, but she does not truly understand and cannot discuss arbitrary subjects. Everything is stored locally in your browser; nothing is sent anywhere.')),
+        h('p', { style: { margin: 0, fontSize: '.92rem' } }, h('b', 'Please note: '), 'AMORA is a fictional character powered by hand-written rules and templates — ', h('b', 'not AI'), '. She can chat about everyday things, remember what you tell her and react to your mood, but she does not truly understand and cannot discuss every subject. Everything is stored locally in your browser; nothing is sent anywhere unless you turn on Knowledge lookup in Settings.')),
       h('label', { class: 'field' }, h('span', { class: 'label' }, 'What should she call you?'), nameInp),
+      fChips('How flirty should she be?', [['0', '🌸 Sweet'], ['1', '😉 Flirty'], ['2', '🔥 Steamy'], ['3', '🌶️ Spicy']], () => String(A.settings.content.level), (v) => { A.settings.content.level = +v; }, 'Adults only (18+). Suggestive, never graphic — and it also depends on how close you two get. Change it any time in Settings.'),
       h('span', { class: 'label', style: { textAlign: 'left' } }, 'Choose a starting personality (everything can be changed later)'), grid,
-      h('label', { class: 'row', style: { textAlign: 'left', gap: '12px', margin: '6px 0 4px', cursor: 'pointer' } }, chk, h('span', { style: { fontSize: '.9rem' } }, 'I confirm that I am 18 or older. AMORA is for adults only.')));
+      !A.settings.ageConfirmed && h('label', { class: 'row', style: { textAlign: 'left', gap: '12px', margin: '6px 0 4px', cursor: 'pointer' } }, chk, h('span', { style: { fontSize: '.9rem' } }, 'I confirm that I am 18 or older. AMORA is for adults only.')));
     const m = modal({ body, size: 'lg', dismissable: false, actions: [] });
     m.box.querySelector('.modal-body').append(h('div', { style: { display: 'flex', justifyContent: 'center', padding: '10px 0 14px' } }, go));
     function finish() {

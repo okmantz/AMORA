@@ -2,6 +2,7 @@
 import { h, uid, fmtTime, fmtDay, dayKey, download, clamp } from '../core/util.js';
 import { icon, toast, modal, confirmBox as cb, promptBox } from './dom.js';
 import { avatarEl, paintAvatar } from './avatar.js';
+import { portraitSVG } from './portrait.js';
 import { MODES, STAGES, stageProgress, effectiveStage, unlocked } from '../engine/relationship.js';
 import { SYS } from '../data/system-data.js';
 
@@ -35,6 +36,28 @@ function fmt(text, html) {
     else if (p) frag.append(document.createTextNode(p));
   });
   return frag;
+}
+
+/** Render a stored photo recipe as an SVG string using her current look. */
+export function photoSVG(persona, ph, uid) {
+  return portraitSVG(persona.look, ph.expr || 'happy', { uid, crop: 'full', scene: ph.scene, outfit: ph.outfit, pose: ph.pose });
+}
+/** Convert an SVG string to a PNG blob (for saving). */
+export function svgToPng(svg, w = 900, h = 1200) {
+  return new Promise((res, rej) => {
+    const src = svg.replace('<svg ', `<svg width="${w}" height="${h}" `);
+    const img = new Image();
+    img.onload = () => { const c = document.createElement('canvas'); c.width = w; c.height = h; const x = c.getContext('2d'); x.drawImage(img, 0, 0, w, h); c.toBlob((b) => (b ? res(b) : rej(new Error('Could not create image'))), 'image/png'); };
+    img.onerror = () => rej(new Error('Could not render image'));
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src);
+  });
+}
+export function openPhoto(persona, ph, uid) {
+  const svg = photoSVG(persona, ph, uid + 'L');
+  const wrap = h('div', { class: 'photo-lightbox' }); wrap.innerHTML = svg;
+  modal({ title: '', body: wrap, size: 'sm', actions: [
+    { label: 'Save image', onClick: async () => { try { const b = await svgToPng(photoSVG(persona, ph, uid + 'S')); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${persona.name.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Saved'); } catch (e) { toast(e.message, 'err'); } return false; } },
+    { label: 'Close', kind: 'primary' }] });
 }
 
 export function render(A) {
@@ -150,6 +173,11 @@ export function render(A) {
   }
   function scrollEnd(smooth = true) { requestAnimationFrame(() => msgsEl.scrollTo({ top: msgsEl.scrollHeight, behavior: smooth ? 'smooth' : 'auto' })); }
 
+  function photoBubble(m) {
+    const box = h('button', { type: 'button', class: `photo-card tier${m.photo.tier || 0}`, 'aria-label': 'Open photo', onclick: () => openPhoto(persona(), m.photo, m.id) });
+    box.innerHTML = photoSVG(persona(), m.photo, 'p' + m.id);
+    return box;
+  }
   function addMessage(m, fromHer) {
     emptyEl.classList.add('hidden');
     const dk = dayKey(new Date(m.ts));
@@ -165,7 +193,7 @@ export function render(A) {
         h('button', { class: 'icon-btn', 'aria-label': 'Delete message', onclick: () => { const i = thread.messages.findIndex((x) => x.id === m.id); if (i >= 0) { thread.messages.splice(i, 1); A.save('threads'); el.remove(); } } }, icon('trash', 14)));
       el = h('div', { class: `msg ${m.role}${cont ? ' cont' : ''}`, 'data-id': m.id },
         m.role === 'her' && avatarEl(persona(), m.expr || 'neutral', { size: 34 }),
-        h('div', { class: 'bwrap' }, h('div', { class: 'bubble' }, fmt(m.text)), A.settings.chat.showTimestamps && h('div', { class: 'meta' }, fmtTime(m.ts), m.kind === 'daily' && ' · daily message')),
+        h('div', { class: 'bwrap' }, m.photo ? photoBubble(m) : h('div', { class: 'bubble' }, fmt(m.text), m.source && h('a', { class: 'src', href: m.source.url, target: '_blank', rel: 'noopener noreferrer' }, m.source.kind === 'dict' ? 'Wiktionary' : 'Wikipedia')), A.settings.chat.showTimestamps && h('div', { class: 'meta' }, fmtTime(m.ts), m.kind === 'daily' && ' · daily message')),
         tools);
       lastRole = m.role; lastTs = m.ts;
       if (m.role === 'her') setExpr(m.expr);
@@ -204,7 +232,22 @@ export function render(A) {
       popItem('🌗', 'Change mode', MODES[thread.mode]?.label, () => { pop.close(); modeMenu(modeBtn); })), { up: true });
   }
   const emo = h('button', { class: 'icon-btn', 'aria-label': 'Emoji', onclick: (e) => { const pop = popover(e.currentTarget, h('div', { class: 'emoji-grid' }, EMOJIS.map((x) => h('button', { type: 'button', onclick: () => { ta.value += x; ta.dispatchEvent(new Event('input')); ta.focus(); } }, x))), { up: true }); void pop; } }, icon('smile'));
-  const compose = h('div', { class: 'compose' }, sugEl, h('div', { class: 'composer' }, plus, emo, ta, sendBtn));
+  const cam = h('button', { class: 'icon-btn', 'aria-label': 'Ask for a photo', title: 'Ask for a photo', onclick: (e) => cameraMenu(e.currentTarget) }, icon('camera'));
+  function cameraMenu(anchor) {
+    const lvl = A.contentLevel();
+    const item = (em, title, sub, ask, need = 0) => popItem(em, title, need > lvl ? (A.settings.content.level >= need ? 'Unlocks as you grow closer' : 'Turn up Content level in Settings') : sub, () => { pop.close(); if (need > lvl) { toast(A.settings.content.level >= need ? 'You two need a little more time together for that one.' : 'That one is switched off — see Settings → Content & abilities.'); return; } A.send(ask); }, need > lvl);
+    const pop = popover(anchor, h('div',
+      item('🤳', 'Selfie', 'What she looks like right now', 'Send me a selfie'),
+      item('☕', 'At a café', 'Cozy daytime photo', 'Send me a pic at a cafe'),
+      item('🌿', 'In the garden', 'Sunlit and relaxed', 'Send me a pic in the garden'),
+      item('💪', 'Gym selfie', 'Post-workout glow', 'Send me a gym selfie'),
+      item('🌃', 'Dressed up', 'Out on the town', 'Send me a pic in a dress at night', 1),
+      item('🛏️', 'Cozy in bed', 'Silky and sleepy', 'Send me a pic in a slip in bed', 1),
+      item('👙', 'Beach', 'Swimsuit photo', 'Send me a pic in a bikini at the beach', 2),
+      item('🖤', 'Boudoir', 'Lingerie, always covered', 'Send me a sexy pic in lingerie', 2),
+      item('🎲', 'Surprise me', 'Her choice', 'Send me a surprise pic')), { up: true });
+  }
+  const compose = h('div', { class: 'compose' }, sugEl, h('div', { class: 'composer' }, plus, cam, emo, ta, sendBtn));
 
   const col = h('section', { class: 'chat-col' }, h('div', { class: 'chat-bg' }), h('div', { class: 'chat-dim' }), head, msgsEl, compose);
   root.append(h('div', { class: 'chat' }, scrim, threadsEl, col));

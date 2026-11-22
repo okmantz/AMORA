@@ -8,7 +8,7 @@ export const INTENTS = [
   // safety first — handled specially by the engine (cannot be overridden by custom rules)
   { id: 'crisis', pr: 30, emo: true, expr: 'caring', pats: [W("\\b(kill myself|killing myself|end my life|ending my life|suicid(e|al)|want to die|wanna die|don'?t want to (live|be here|exist)|better off dead|hurt myself|harm myself|self[- ]harm|cut myself|no reason to live)\\b")] },
 
-  { id: 'identity_ai', pr: 11, expr: 'think', pats: [W("\\b(are you|r u|you are|you're) (a |an |really |actually )?(real|human|robot|bot|ai|artificial|program|machine|computer|alive|conscious|sentient|person|chatgpt)\\b"), W("\\b(is this|are we talking to|am i talking to) (a |an )?(real|ai|bot|human|robot|person)\\b"), W("\\b(do you|can you) (really )?(think|feel|understand|have feelings|have emotions)\\b"), W("\\bwho (made|created|built|programmed) you\\b")] },
+  { id: 'identity_ai', pr: 11, expr: 'think', pats: [W("\\b(are you|r u|you are|you're) (a |an |really |actually )?(real|human|robot|bot|ai|artificial|program|machine|computer|alive|conscious|sentient|person|chatgpt)\\b"), W("\\b(is this|are we talking to|am i talking to) (a |an )?(real|ai|bot|human|robot|person)\\b"), W("\\b(do you|can you) (really )?(think(?! (about|of|that|it|we|i|the|this|my|he|she|they|so|there|should|is|are|was|will|would)\\b)|feel|understand|have feelings|have emotions)\\b"), W("\\bwho (made|created|built|programmed) you\\b")] },
   { id: 'limits', pr: 10, expr: 'think', pats: [W("\\bwhat can you (do|talk about|discuss)\\b"), W("\\bhow do you work\\b"), W("\\b(how smart|how intelligent) are you\\b"), W("\\b(do you|can you) (actually )?(understand|remember) (me|what i)\\b"), W("\\bwhat are your (limits|limitations)\\b"), W("\\bwhat do you know\\b(?! about me)"), W("^(help|help me|menu|commands|options)\\??$")] },
   { id: 'remember_cmd', pr: 12, expr: 'happy', aff: 1, pats: [W("^(please )?(remember|don'?t forget|do not forget|note|keep in mind)( that)?\\b.{4,}")] },
   { id: 'forget_cmd', pr: 12, expr: 'neutral', pats: [W("^(please )?forget (about )?(that|what i said|everything|my )")] },
@@ -58,13 +58,13 @@ export const INTENTS = [
   { id: 'starter', pr: 9, expr: 'happy', pats: [W("\\b(what should we (talk|do|chat)|let'?s (talk|chat) about|can we talk about|wanna talk about|want to talk about|talk to me|say something|let'?s talk|give me a topic|conversation starter|ask me something|ask me a question|surprise me|keep me company|got anything|what do you wanna talk about)\\b")] },
   { id: 'laugh', pr: 4, combo: true, expr: 'laugh', pats: [W("^(lol+|lmao|haha+|hehe+|rofl|😂|🤣|lmfao|hahaha+|ha+|that'?s (so )?funny|you'?re funny|funny)\\b")] },
   { id: 'advice', pr: 8, expr: 'think', fam: 1, pats: [W("\\badvice( please)?\\b"), W("\\b(what should i do|any (advice|tips|suggestions)|help me (decide|choose|figure)|should i\\b|what would you do|can you (help|advise)|i need (advice|help|your opinion)|i don'?t know what to do)\\b")] },
-  { id: 'opinion', pr: 7, expr: 'think', pats: [W("\\b(what do you think (of|about)|your (opinion|take|thoughts)|do you (like|love|enjoy|hate|prefer) \\w+|which (do you|would you) (prefer|like|pick)|what(?:'?s| is) your (favou?rite|fav)|do you have a favou?rite)\\b")] },
+  { id: 'opinion', pr: 7, expr: 'think', pats: [W("\\b(what do you think (of|about)|do you (believe in|agree|think (about|that|it))|how do you feel about|what('?s| is) your (view|stance|feeling) on|your (opinion|take|thoughts)|do you (like|love|enjoy|hate|prefer) \\w+|which (do you|would you) (prefer|like|pick)|what(?:'?s| is) your (favou?rite|fav)|do you have a favou?rite)\\b")] },
 
   // about her
   { id: 'her_name', pr: 11, expr: 'happy', pats: [W("\\bwhat(?:'?s| is) your name\\b"), W("\\bwhat (should|can) i call you\\b"), W("\\bwho are you\\b")] },
   { id: 'her_job', pr: 11, expr: 'think', pats: [W("\\bwhat (do you|did you) do for (a living|work)\\b"), W("\\bwhat(?:'?s| is) your (job|occupation|profession|career)\\b"), W("\\bwhere do you work\\b"), W("\\bdo you have a job\\b")] },
   { id: 'her_age', pr: 11, expr: 'wink', pats: [W("\\bhow old are you\\b"), W("\\bwhat(?:'?s| is) your age\\b"), W("\\bwhen (is|was) your birthday\\b")] },
-  { id: 'her_looks', pr: 11, expr: 'blush', pats: [W("\\bwhat do you look like\\b"), W("\\bwhat (are|r) you wearing\\b"), W("\\bdescribe (yourself|your look)\\b"), W("\\b(what colou?r|how long) (is|are) your (hair|eyes)\\b"), W("\\bwhat(?:'?s| is) your (hair|eye) colou?r\\b")] },
+  { id: 'her_looks', pr: 11, expr: 'blush', pats: [W("\\bwhat do you look like\\b"), W("\\bdescribe (yourself|your look)\\b"), W("\\b(what colou?r|how long) (is|are) your (hair|eyes)\\b"), W("\\bwhat(?:'?s| is) your (hair|eye) colou?r\\b")] },
   { id: 'her_story', pr: 11, expr: 'happy', pats: [W("\\btell me (about yourself|more about you|something about you|about you)\\b"), W("\\bwhat(?:'?s| is) your (story|background)\\b"), W("\\bwho are you really\\b"), W("\\bwhat are you like\\b"), W("\\btell me about your (life|day|past|childhood)\\b")] },
   { id: 'her_hobbies', pr: 11, expr: 'happy', pats: [W("\\bwhat do you (do for fun|like to do|enjoy doing|do in your free time|do all day)\\b"), W("\\bwhat are your (hobbies|interests|passions)\\b"), W("\\bdo you have (any )?(hobbies|interests)\\b")] },
   { id: 'her_favorite', pr: 11, expr: 'think', pats: [W("\\bwhat(?:'?s| is) your fav(ou?rite)? (music|song|band|artist|movie|film|book|food|color|colour|show|season|animal|drink|activity|hobby)\\b"), W("\\b(what|which) (music|movies?|books?|food|songs?) do you (like|love|enjoy|listen to|watch|read|eat)\\b"), W("\\bwhat do you (listen to|watch|read|eat)\\b")] },
@@ -79,6 +79,57 @@ export const INTENTS = [
   { id: 'maybe', pr: 2, combo: true, pats: [W("^(maybe|idk|i don'?t know|dunno|not sure|perhaps|i guess|hmm+|it depends|kinda|sort of|sometimes|who knows|unsure)[.! ?]*$")] },
   { id: 'ok_filler', pr: 1, combo: true, pats: [W("^(ok(ay)?|k|cool|nice|alright|fine|i see|oh|ah|aha|wow|oh ok(ay)?|got it|makes sense|interesting|true|noted|lol ok|hm+|mm+|right|neat|sweet|bet)[.! ]*$")] },
   { id: 'nothing', pr: 3, pats: [W("^(nothing|nm|nothing much|not much|same old|just chilling|chilling|just relaxing|just here|nada|the usual)[.! ]*$")] },
+  // ---- photos, flirting & intimacy (content is gated by Settings → Content level and relationship stage) ----
+  { id: 'photo_spicy', pr: 16, expr: 'sultry', aff: 1, pats: [
+    W("\\b(sexy|spicy|naughty|hot|steamy|risqu[eé]|lingerie|bikini|swimsuit|boudoir|underwear|panties|lacy|nudes?|naked|topless|racy|revealing|cleavage|thong|bra)\\b.{0,30}\\b(pics?|pictures?|photos?|selfies?|shots?|snaps?)\\b"),
+    W("\\b(pics?|pictures?|photos?|selfies?|snaps?)\\b.{0,30}\\b(sexy|spicy|naughty|lingerie|bikini|swimsuit|boudoir|underwear|panties|nudes?|naked|topless|racy|in your bra|in lingerie|in a bikini)\\b"),
+    W("\\b(send|show|share|let me see|can i see|wanna see|want to see)\\b.{0,12}\\b(nudes?|lingerie|your (body|underwear|bra|lingerie|bikini|panties|cleavage|legs|curves)|something (sexy|spicy|naughty|hot)|more skin)\\b"),
+    W("\\b(send|show|take)( me)? (a |an )?(sexy|spicy|naughty|hot|steamy|racy) (one|pic|photo|selfie|picture)\\b"),
+    W("^(nudes?|send nudes?|show me more|show me something (sexy|spicy)|spicy (one|pic))\\b"),
+  ] },
+  { id: 'photo_request', pr: 15, expr: 'wink', aff: 1, pats: [
+    W("\\b(send|show|share|snap|take|text|give|get)\\b( me)?( a| an| another| one more| some| one)? ?(pics?|pictures?|photos?|selfies?|snaps?)\\b"),
+    W("\\b(can|could|may|would) (i|you)\\b.{0,14}\\b(see|get|send|take|show)\\b.{0,16}\\b(pics?|pictures?|photos?|selfies?|you|yourself|your face)\\b"),
+    W("\\blet me see (you|your (face|smile|outfit|look|hair))\\b"),
+    W("\\bshow me (what you look like|yourself|your face|your outfit|what you'?re wearing|your (hair|smile))\\b"),
+    W("^(selfie|pic|picture|photo|pics|send pic|send a pic|selfie please|pic please|photo please)( please| pls)?\\??$"),
+    W("\\b(pics?|pictures?|photos?|selfies?) of you\\b"),
+    W("\\b(more|another) (pics?|pictures?|photos?|selfies?)\\b"),
+    W("\\bi (wanna|want to|would love to|'?d love to) see (you|your (face|smile|outfit))\\b"),
+  ] },
+  { id: 'what_wearing', pr: 12, expr: 'blush', pats: [W("\\bwhat are you wearing\\b"), W("\\bwhat('?re| are) you in\\b"), W("\\bwhat do you have on\\b"), W("\\bwhat('?s| is) (on|your outfit)( today)?\\b(?!.*\\b(tv|netflix|tonight)\\b)")] },
+  { id: 'explicit', pr: 13, expr: 'blush', pats: [W("\\b(fuck|fucking|suck|sucking|cum|cumming|blowjob|handjob|dick|cock|pussy|clit|tits|boobs|anal|orgasm|moan|moaning|squirt|dildo|vibrator|bondage|bdsm|slut|whore|nipples?|titties)\\b"), W("\\b(have|having|wanna have|let'?s have|make|want) sex\\b"), W("\\bsex with you\\b"), W("\\b(sleep|go to bed) with me\\b")] },
+  { id: 'sexy_talk', pr: 12, expr: 'sultry', aff: 2, pats: [
+    W("\\b(i want|i need|i wanna|i'?d love to|i'?d like to) (you|to (kiss|touch|hold|feel|taste|undress|have) you)\\b"),
+    W("\\b(make out|makeout|make love|in bed with you|get naughty|be naughty|be bad|dirty talk|talk dirty|sweet talk me|whisper (to me|something)|seduce me|tempt me|tease me|turn me on|get me going|get steamy|get spicy|heat things up|spice (it|things) up|sext|sexting|flirt with me|talk sexy|be sexy)\\b"),
+    W("\\b(horny|turned on|aroused|craving you|need you so bad|want you so bad|so hot for you|thirsty for you)\\b"),
+    W("\\bwhat would you do (to|with) me\\b"), W("\\bif i (was|were) (there|with you|next to you|in your bed)\\b"),
+    W("\\bsay something (sexy|naughty|dirty|spicy|hot|steamy|seductive|flirty)\\b"), W("\\bcome (over|to bed)\\b"),
+    W("\\b(undress|strip|take (it|that|your \\w+) off)\\b"),
+  ] },
+  { id: 'play_power', pr: 12, expr: 'wink', aff: 1, pats: [
+    W("\\b(tell me what to do|boss me|be (in charge|bossy|dominant|my (boss|mistress))|take (control|charge)|you'?re (in charge|the boss)|order me|command me|dominate me|punish me|put me in my place|i'?ve been (bad|naughty)|i was (bad|naughty))\\b"),
+    W("\\b(i'?m (in charge|the boss)|do as (i|you'?re) (say|told)|be a good girl|good girl|you'?re mine|behave yourself|obey me)\\b"),
+  ] },
+  { id: 'sexy_compliment', pr: 11, expr: 'blush', aff: 2, pats: [
+    W("\\b(you'?re|you are|you look|you looking|ur) (so |really |incredibly |damn |super |absolutely |kinda |very )?(sexy|hot|gorgeous|stunning|smoking|alluring|seductive|irresistible|breathtaking|drop[- ]dead|fine|beautiful and sexy)\\b"),
+    W("\\b(sexy|hot|gorgeous) (girl|lady|woman|thing|babe)\\b"), W("\\byour (body|curves|legs|lips|figure|hips|butt|booty|chest|shape|eyes|smile)\\b.*\\b(sexy|hot|amazing|perfect|gorgeous|incredible|stunning)\\b"),
+    W("\\b(you )?turn(s|ing)? me on\\b"), W("\\byou drive me (crazy|wild|insane)\\b"), W("\\bi can'?t stop (looking|staring|thinking about you)\\b"),
+  ] },
+  { id: 'her_turnons', pr: 11, expr: 'wink', pats: [W("\\bwhat (turns|turn) you on\\b"), W("\\bwhat('?s| is) your (type|kink|fantasy|fantasies|guilty pleasure|love language|turn[- ]?ons?|naughty secret)\\b"), W("\\bwhat do you (fantasize|fantasise|daydream) about\\b"), W("\\bdo you have (any )?(fantasies|a fantasy|kinks?)\\b"), W("\\bwhat are you into\\b")] },
+  { id: 'pickup_line', pr: 11, expr: 'wink', pats: [W("\\b(pick ?up lines?|cheesy (line|joke)|corny (line|joke)|flirty (line|joke))\\b"), W("\\bsay something cheesy\\b"), W("\\bhit on me\\b")] },
+  { id: 'roast_me', pr: 11, expr: 'laugh', pats: [W("\\broast me\\b"), W("\\b(make fun of|tease|insult) me (playfully|a little|for fun)\\b"), W("\\bgive me a (good )?roast\\b")] },
+  { id: 'hype_me', pr: 11, expr: 'happy', aff: 1, pats: [W("\\b(hype me|pump me up|motivate me|encourage me|cheer me on|give me a pep talk|give me motivation|say something (nice|encouraging|motivating))\\b"), W("\\bcompliment me\\b"), W("\\btell me something (nice|good|sweet)\\b"), W("\\bhelp me (feel|be) (confident|brave|strong)\\b")] },
+  { id: 'dare', pr: 11, expr: 'wink', pats: [W("\\b(dare me|give me a dare|truth or dare|i dare you)\\b")] },
+  { id: 'confess', pr: 10, expr: 'blush', pats: [W("\\b(tell me a|share a|give me a|got a) (secret|confession)\\b"), W("\\bconfess (something|to me)\\b"), W("\\bwhat('?s| is) your (biggest )?(secret|confession)\\b")] },
+  { id: 'story_request', pr: 12, expr: 'happy', pats: [W("\\b(tell|write|read|give|make up|spin) me (a |an |another |one )?(\\w+ )?(story|tale|bedtime story)\\b"), W("\\b(tell|write|read|give|make up) (me )?(a |an |another )?(romantic |steamy |spicy |sexy |funny |love |short )?(story|tale)\\b"), W("^(story time|another story|more story)\\b")] },
+  { id: 'poem_request', pr: 12, expr: 'love', aff: 1, pats: [W("\\b(write|make|compose|give|read|recite|say|tell) (me )?(a |an |another |one )?(\\w+ )?(poem|poetry|haiku|verse|love note|love letter)\\b"), W("^(poem|another poem)\\b")] },
+  // ---- practical abilities ----
+  { id: 'tool_calc', pr: 12, expr: 'think', pats: [W("^(what(?:'s| is)|whats|calculate|calc|compute|solve|work out|how much is)?\\s*[-+*/x×÷^%().,\\d\\s]*\\d[-+*/x×÷^%().,\\d\\s]*[?=]?$"), W("\\b(\\d+(?:\\.\\d+)?\\s*%\\s*(of|off|tip)|square root of|squared|cubed|sqrt)\\b.*\\d"), W("\\b\\d+\\s*(plus|minus|times|multiplied by|divided by|over)\\s*\\d+\\b"), W("\\bwhat(?:'s| is) \\d.*[-+*/×÷^]\\s*\\d")] },
+  { id: 'tool_convert', pr: 12, expr: 'think', pats: [W("\\bconvert\\b.*\\d"), W("\\b-?\\d+(?:\\.\\d+)?\\s*[a-z°]+\\s+(to|in|into)\\s+[a-z°]+\\b"), W("\\bhow many [a-z ]+ (are |is )?(in|per) (a |an |one |\\d)")] },
+  { id: 'tool_roll', pr: 12, expr: 'happy', pats: [W("\\b(roll|flip|toss)\\b.*\\b(dice|die|d\\d+|coin)\\b"), W("\\b\\d*d\\d{1,3}\\b"), W("\\bheads or tails\\b"), W("\\b(pick|choose|give me|random) (a |the )?(random )?number\\b.*\\d"), W("\\b(pick|choose|decide)\\b.*\\bor\\b"), W("\\bhelp me (decide|choose|pick)\\b")] },
+  { id: 'tool_days', pr: 12, expr: 'think', pats: [W("\\bhow many days\\b.*\\b(until|till|to|since|before|between)\\b"), W("\\b(countdown|days) (to|until|till)\\b"), W("\\bwhat day (of the week )?(is|was|will)\\b.*\\b(\\d|january|february|march|april|may|june|july|august|september|october|november|december|christmas|halloween|new year)"), W("\\bhow long (until|till|since)\\b")] },
+  { id: 'lookup_q', pr: 6, expr: 'think', pats: [W("^(what|who) (is|are|was|were) (an? |the )?(?!you\\b|your\\b|up\\b|that\\b|this\\b|it\\b|going\\b|wrong\\b|happening\\b|new\\b|the matter\\b|my\\b|our\\b|he\\b|she\\b|they\\b|there\\b|everyone\\b|the time\\b|time\\b|today\\b|the date\\b|your name\\b|better\\b)[a-z][\\w' -]{2,40}\\??$"), W("\\b(capital of|currency of|population of|largest (country|ocean|planet)|biggest (country|ocean|planet)|tallest mountain|longest river|how many (planets|continents|oceans)|boiling point|freezing point|speed of light|chemical (symbol|formula)|why is the sky|who (painted|wrote|invented|discovered|created) the)\\b"), W("^how (does|do|did) .{3,40} work\\??$"), W("^(look up|google|search for|search|wiki|wikipedia|find out about|find info on)\\s+.{2,}"), W("^(define|definition of|meaning of|what does .{2,} mean|what is the meaning of)\\b.{0,}")] },
   { id: 'knowledge_q', pr: 5, expr: 'think', pats: [W("^(what|who|when|where|how|why)('?s| is| are| was| were| does| do| did| can| many| much| old| far| long| big| tall| fast)\\b.{4,}\\?$"), W("^(explain|define|describe|tell me about|teach me|what do you know about)\\b.{3,}")] },
 ];
 

@@ -1,7 +1,8 @@
 // AMORA — persistent local storage layer. Everything lives in localStorage on this device.
 // Keys are namespaced and versioned; every access is wrapped so a full or blocked storage never crashes the app.
 
-const NS = 'amora.v1.';
+const ROOT = 'amora.v1.';
+let NS = ROOT;          // active namespace (changes per signed-in account)
 let memoryFallback = {}; // used if localStorage is unavailable (private mode etc.)
 let listeners = [];
 export const onStorageError = (fn) => listeners.push(fn);
@@ -12,6 +13,18 @@ function ls() {
 }
 
 export const Store = {
+  ROOT,
+  /** Switch to an account's private namespace. Pass null to return to the shared root. */
+  setNamespace(prefix) { NS = prefix ? ROOT + prefix : ROOT; },
+  namespace() { return NS; },
+  /** Shared (non-account) keys such as the account registry and session pointer. */
+  getGlobal(key, fallback = null) { try { const raw = ls()?.getItem(ROOT + key); return raw == null ? fallback : JSON.parse(raw); } catch { return fallback; } },
+  setGlobal(key, value) { try { ls()?.setItem(ROOT + key, JSON.stringify(value)); return true; } catch (e) { report(e, key); return false; } },
+  removeGlobal(key) { try { ls()?.removeItem(ROOT + key); } catch { /* ignore */ } },
+  /** Raw keys in localStorage that belong to a given full prefix (e.g. an account). */
+  rawKeys(prefix) { try { const s = ls(); return s ? Object.keys(s).filter((k) => k.startsWith(prefix)) : []; } catch { return []; } },
+  /** Legacy (pre-accounts) keys stored directly under the root namespace. */
+  legacyKeys() { return this.rawKeys(ROOT).filter((k) => { const r = k.slice(ROOT.length); return !r.startsWith('u.') && !['accounts', 'session', '__t'].includes(r) && !r.startsWith('auth.'); }); },
   available() {
     try { const s = ls(); if (!s) return false; s.setItem(NS + '__t', '1'); s.removeItem(NS + '__t'); return true; } catch { return false; }
   },
@@ -69,6 +82,11 @@ export const defaultSettings = () => ({
     dailyCapFP: 40,
     dailyCapAP: 24,
   },
+  content: {
+    level: 1,               // 0 Sweet · 1 Flirty · 2 Steamy · 3 Spicy (also capped by relationship stage when gating is on)
+  },
+  photos: { enabled: true },    // she can send selfies / photos of herself when asked
+  lookup: { enabled: false },   // opt-in: look up topics on Wikipedia & dictionary (sends your question's subject to those sites)
   ageConfirmed: false,
   onboarded: false,
   userName: '',

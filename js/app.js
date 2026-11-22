@@ -1,5 +1,7 @@
 // AMORA — application core: state, persistence, theming, navigation and the send/reply pipeline.
 import { h, $, uid, debounce, bus, dayKey, deepClone, clamp, sleep } from './core/util.js';
+import { Auth } from './core/auth.js';
+import { lookup } from './core/lookup.js';
 import { Store, defaultSettings, mergeDefaults, defaultMemory, trimThreads, onStorageError } from './core/store.js';
 import { Engine } from './engine/engine.js';
 import { defaultRel, applyEffects, checkMilestones, effectiveStage, MODES, unlocked, STAGES } from './engine/relationship.js';
@@ -102,6 +104,13 @@ export const A = {
     if (this.state.activeThread[this.state.activeId] === id) delete this.state.activeThread[this.state.activeId];
     this.save(['threads', 'meta']);
   },
+  /** The content level actually in effect: Settings → Content level, capped by relationship stage when gating is on. */
+  contentLevel() {
+    const lvl = clamp(this.settings.content?.level ?? 1, 0, 3);
+    if (this.settings.relationship?.gating === false) return lvl;
+    return Math.min(lvl, [0, 1, 1, 2, 3, 3][effectiveStage(this.rel, this.settings)]);
+  },
+
   addMessage(role, text, extra = {}) {
     const t = this.thread();
     const m = { id: uid('m'), role, text, ts: Date.now(), ...extra };
@@ -171,6 +180,24 @@ export const A = {
       this.chat?.addMessage(hm, true);
       if (!this.chat) { this.unread = true; this.bus.emit('unread'); }
       if (i < r.messages.length - 1) await sleep(quick ? 0 : 350);
+    }
+    // a photo of herself (rendered from her current look when shown; only the recipe is stored)
+    if (fx.photo) {
+      if (!quick && this.settings.chat.showTyping) { this.chat?.setTyping(true, 'think'); await sleep(900); }
+      this.chat?.setTyping(false);
+      const pm = this.addMessage('her', '📷 Photo', { photo: fx.photo, expr: fx.photo.expr });
+      this.chat?.addMessage(pm, true);
+      if (!this.chat) { this.unread = true; this.bus.emit('unread'); }
+      if (fx.photoAfter) { await sleep(quick ? 0 : 700); const am = this.addMessage('her', fx.photoAfter, { expr: fx.photo.tier >= 1 ? 'sultry' : 'happy' }); this.chat?.addMessage(am, true); }
+    }
+    // optional knowledge lookup (opt-in)
+    if (fx.lookup && this.settings.lookup?.enabled) {
+      this.chat?.setTyping(true, 'think');
+      let res = null; try { res = await lookup(fx.lookup); } catch { res = null; }
+      this.chat?.setTyping(false);
+      const intro = res ? (res.kind === 'dict' ? res.text : `${res.text}`) : `I couldn't find anything solid on “${fx.lookup.subject}” — want to tell me what you know instead?`;
+      const lm = this.addMessage('her', intro, { expr: res ? 'happy' : 'think', ...(res ? { source: { title: res.title, url: res.url, kind: res.kind } } : {}) });
+      this.chat?.addMessage(lm, true);
     }
     for (const n of notes) { const sm = this.addMessage('sys', n.text, { kind: n.kind, html: true }); this.chat?.addMessage(sm); }
     if (fx.scenarioDone) { const sm = this.addMessage('sys', `Scenario complete. ${SYS.scenarioEnd[0]}`, { kind: 'info' }); this.chat?.addMessage(sm); }
@@ -293,7 +320,8 @@ export const A = {
     app.innerHTML = '';
     const navBtn = ([v, l, ic], mini) => h('button', { class: 'nav-btn', 'data-nav': v, onclick: () => (v === 'more' ? this.moreMenu() : this.go(v)), 'aria-label': l }, icon(ic, 22), h('span', l), v === 'chat' && h('i', { class: 'dot hidden' }));
     const rail = h('nav', { class: 'rail', 'aria-label': 'Main' }, h('div', { class: 'logo' }, 'AMORA'), NAV.map((n) => navBtn(n)), h('div', { class: 'spacer' }),
-      h('button', { class: 'nav-btn', onclick: () => this.toggleTheme(), 'aria-label': 'Toggle theme' }, icon('moon', 22), h('span', 'Theme')));
+      h('button', { class: 'nav-btn', onclick: () => this.toggleTheme(), 'aria-label': 'Toggle theme' }, icon('moon', 22), h('span', 'Theme')),
+      h('button', { class: 'nav-btn', onclick: () => this.logout(), 'aria-label': 'Sign out', title: `Signed in as ${Auth.current?.username || ''}` }, icon('lock', 22), h('span', 'Sign out')));
     const main = h('main', { class: 'main', id: 'view-host' });
     const tabbar = h('nav', { class: 'tabbar', 'aria-label': 'Main' }, TAB_PRIMARY.map((id) => {
       const n = NAV.find((x) => x[0] === id) || ['more', 'More', 'more'];
@@ -305,6 +333,7 @@ export const A = {
     const body = h('div', { class: 'grid' }, ['journal', 'history', 'settings'].map((v) => { const n = NAV.find((x) => x[0] === v); return h('button', { class: 'item', style: { border: 0, width: '100%', textAlign: 'left' }, onclick: () => { m.close(); this.go(v); } }, icon(n[2], 22), h('span', { class: 't' }, h('b', n[1])), icon('chevron', 16)); }));
     const m = modal({ title: 'More', body, size: 'sm' });
   },
+  logout() { this.flush(); Auth.logout(); location.hash = ''; location.reload(); },
   toggleTheme() {
     const dark = document.documentElement.dataset.theme === 'dark';
     this.settings.theme = dark ? 'light' : 'dark';
@@ -317,7 +346,12 @@ export async function boot() {
   try {
     if (!Store.available()) toast('Local storage is unavailable — nothing will be saved this session.', 'err');
     onStorageError(() => { /* surfaced in _write */ });
+    hideSplash();
+    let entry = Auth.resume() ? { created: false } : null;
+    if (!entry) { const { authScreen } = await import('./ui/auth.js'); entry = await authScreen(); }
     A.load();
+    if (entry.created && !entry.adopted) { A.settings.ageConfirmed = true; const d = Auth.current.display; if (d && d !== Auth.current.username) A.settings.userName = d; A.save('settings'); }
+    if (entry.created && entry.adopted) { A.settings.ageConfirmed = true; A.save('settings'); }
     A.applyTheme();
     window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => A.settings.theme === 'auto' && A.applyTheme());
     A.mountShell();

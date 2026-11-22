@@ -13,10 +13,14 @@ import { applyStyle, emojiFor, stripEmoji, addNickname } from './style.js';
 import { learn, summarize, addMention, upcomingDates } from './memory.js';
 import { triggerMatches, conditionsMet, markRule } from './rules.js';
 import { effectiveStage, MODES, STATUS_LABEL, STAGES } from './relationship.js';
+import { SPICE_IDS, TOOL_IDS, DEFS as EXTRA_DEFS, spiceIntent, toolIntent, heatExtra, lookupPieces, photoPieces } from './spice.js';
 
-const STYLE_POOLS = { playful: 'playfulness', sarcastic: 'sarcasm', shy: 'shyness', romantic: 'romance', confident: 'confidence', affectionate: 'affection', humor: 'humor', smart: 'intelligence', expressive: 'expressiveness' };
-const NO_EMO = new Set(['playful', 'sarcastic', 'humor', 'expressive']);
-const INFO = new Set(['recall_all', 'recall_name', 'time_date', 'identity_ai', 'limits', 'knowledge_q', 'forget_cmd', 'remember_cmd', 'weather']);
+// merge the extra intent databases (flirting, photos, range) into DB.intent once
+for (const [k, v] of Object.entries(EXTRA_DEFS)) if (!DB.intent[k]) DB.intent[k] = v;
+
+const STYLE_POOLS = { spicy: 'spice', dominant: 'dominance', mischievous: 'mischief', playful: 'playfulness', sarcastic: 'sarcasm', shy: 'shyness', romantic: 'romance', confident: 'confidence', affectionate: 'affection', humor: 'humor', smart: 'intelligence', expressive: 'expressiveness' };
+const NO_EMO = new Set(['playful', 'sarcastic', 'humor', 'expressive', 'spicy', 'dominant', 'mischievous']);
+const INFO = new Set(['tool_calc', 'tool_convert', 'tool_roll', 'tool_days', 'lookup_q', 'story_request', 'poem_request', 'recall_all', 'recall_name', 'time_date', 'identity_ai', 'limits', 'knowledge_q', 'forget_cmd', 'remember_cmd', 'weather']);
 const REACT_GROUP = { compliment: 'compliment', tease: 'teasing', love_you: 'affection', hug: 'affection', kiss: 'affection', miss_you: 'affection', disagree: 'disagreement', opinion: 'question', her_story: 'question' };
 const ROMANCE_STAGE = [0.05, 0.3, 0.6, 1, 1.2, 1.3];
 const FLIRTY_OK = new Set(['greeting', 'how_are_you', 'whats_up', 'compliment', 'thanks', 'miss_you', 'hug', 'goodnight', 'goodmorning', 'farewell', 'laugh', 'share_day', 'excited', 'her_looks', 'date_invite', 'love_you', 'ok_filler', 'compliment_user']);
@@ -38,6 +42,8 @@ export class Engine {
     const now = c.now || new Date();
     const realStage = effectiveStage(rel, settings);
     const stage = settings.relationship?.gating === false ? 5 : realStage;
+    const settingLevel = clamp(settings.content?.level ?? 1, 0, 3);
+    const level = settings.relationship?.gating === false ? settingLevel : Math.min(settingLevel, [0, 1, 1, 2, 3, 3][realStage]);
     const modeKey = MODES[c.mode] ? c.mode : 'casual';
     const delta = MODES[modeKey].delta;
     const tr = {};
@@ -51,7 +57,7 @@ export class Engine {
     const nicks = (persona.style.nicknames || []).filter(Boolean);
     const L = persona.interests;
     const X = {
-      rng, persona, mem, rel, conv, settings, now, a, traits: tr, stage, realStage, mode: modeKey, modeDef: MODES[modeKey], used,
+      rng, persona, mem, rel, conv, settings, now, a, traits: tr, stage, realStage, level, settingLevel, mode: modeKey, modeDef: MODES[modeKey], used,
       markUsed(t) { const h = hash(t); used.add(h); (conv.used ||= []).push(h); (mem.recent ||= []).push(h); if (conv.used.length > 120) conv.used.shift(); if (mem.recent.length > 160) mem.recent.shift(); },
     };
     const interest = (key, list, uniqueKey) => {
@@ -118,6 +124,7 @@ export class Engine {
       if (pool === 'affectionate' && opts.emo) w = Math.max(w, 0.8);
       c.push(...asCands(def[pool], w));
     }
+    if (X.level != null) for (const x of c) { const l = x.e && typeof x.e === 'object' ? x.e.lvl : undefined; if (l != null) { if (l === X.level) x.w *= 3; else if (l === X.level - 1) x.w *= 1.5; } }
     if (def.stage) for (const [k, arr] of Object.entries(def.stage)) if (stage >= +k) c.push(...asCands(arr, stage === +k ? 2 : 0.9));
     if (def.mode?.[X.mode]) c.push(...asCands(def.mode[X.mode], 2.5));
     const grp = REACT_GROUP[id];
@@ -278,7 +285,7 @@ export class Engine {
     }
 
     // 8. topics: either the main answer (no strong intent) or an enrichment
-    const weakIntent = !primary || primary.meta.pr <= 7 || ['knowledge_q', 'opinion', 'share_day'].includes(primary?.id);
+    const weakIntent = !primary || (primary.meta.pr <= 7 && !TOOL_IDS.has(primary.id)) || ['knowledge_q', 'opinion', 'share_day'].includes(primary?.id);
     let topicId = topicHits[0]?.id || null;
     if (!topicId && !pend && weakIntent && conv.topic && conv.topicAge < 3 && a.len >= 3 && a.len <= 12 && !a.isQuestion) topicId = conv.topic;
     if (topicId && !emo && (weakIntent || !hasCore) && !pend) {
@@ -311,7 +318,7 @@ export class Engine {
       pieces.push({ k: 'checkin', t: pickOne(SYS.checkin, rng), p: P.checkin, o: 6 });
       conv.lastCheckin = conv.turn;
     }
-    const quiet = emo || INFO.has(primary?.id) || ['kiss', 'marry'].includes(primary?.id) || ['joke', 'wyr', 'tot'].includes(conv.pending?.type);
+    const quiet = emo || INFO.has(primary?.id) || ['kiss', 'marry', 'photo_request', 'photo_spicy', 'what_wearing', 'explicit', 'sexy_talk', 'play_power', 'sexy_compliment', 'her_turnons', 'pickup_line', 'dare', 'confess'].includes(primary?.id) || ['joke', 'wyr', 'tot'].includes(conv.pending?.type);
     if (!quiet) {
       const cb = this.callback(X, a, !!primary && primary.meta.pr > 9);
       if (cb) pieces.push(cb);
@@ -338,6 +345,8 @@ export class Engine {
     const pieces = [];
     const core = (t, extra = {}) => pieces.push({ k: 'core', t, p: P.core, ...extra });
     let follow = [], expr = null;
+    if (SPICE_IDS.has(id)) { const r = spiceIntent(this, id, a, X, fx); if (r) return { pieces: r.pieces, follow: r.follow || [], expr: r.expr || null }; }
+    if (TOOL_IDS.has(id)) { const r = toolIntent(this, id, a, X, fx); if (r) return { pieces: r.pieces, follow: r.follow || [], expr: r.expr || null }; return { pieces: [{ k: 'core', t: pickOne(["Hmm, I couldn't quite parse that — try writing it like “15% of 80” or “5 miles to km”.", "I didn't catch the numbers in that — could you phrase it a little differently?"], rng), p: P.core }], follow: [], expr: 'think' }; }
     const askOf = () => (def?.ask || []).map((e) => ({ e: { t: e.q, ...(e.min ? { min: e.min } : {}) }, w: 1, p: e.p }));
 
     switch (id) {
@@ -380,6 +389,8 @@ export class Engine {
         break;
       }
       case 'knowledge_q': {
+        const lk = lookupPieces(this, a, X, fx, true);
+        if (lk) return { pieces: lk.pieces, follow: [], expr: lk.expr };
         const s = this.say(def, X, id, {});
         if (s) core(s.text);
         const t = topicHits[0]?.id;
@@ -400,6 +411,7 @@ export class Engine {
       case 'farewell': case 'goodnight': {
         const s = this.say(def, X, id, { emo });
         if (s) core(s.text);
+        if (id === 'goodnight') { const hx = heatExtra(this, id, X); if (hx) pieces.push(hx); }
         conv.pending = null;
         break;
       }
@@ -409,6 +421,7 @@ export class Engine {
         if (s) core(s.text);
         follow = askOf();
         if (id === 'greeting' || id === 'goodmorning') this.dateGreeting(X, pieces);
+        if (id === 'goodmorning') { const hx = heatExtra(this, id, X); if (hx) pieces.push(hx); }
       }
     }
     return { pieces, follow, expr };
@@ -705,7 +718,7 @@ export class Engine {
       return { pieces: [pc(pickAck(S.hobby, { answer: ans }))], expr: 'happy', follow: [{ e: { t: 'How did you get into it?' }, w: 1, p: 'open' }] };
     }
     if (kind === 'topicq') {
-      if (a.isQuestion && !a.s.pos) return null;
+      if (a.isQuestion) return null;
       if (fx.learned.length) return { pieces: [], expr: 'happy', follow: TOPIC_DATA[arg] ? TOPIC_DATA[arg].asks.map((q) => ({ e: { t: q.q }, w: 1, p: q.p })) : [] };
       const D = TOPIC_DATA[arg];
       const pieces = [pc(pickAck(S.topicq, {}))];
@@ -757,6 +770,14 @@ export class Engine {
       const t = pick ? (pick === mine ? `${cap(pick)}! Me too — we match.` : `${cap(pick)}, huh — I'm more of a ${mine} person, but I respect it.`) : `Hmm, can't decide? I'd pick ${mine}.`;
       conv.pending = { type: 'yesno:tot' };
       return { pieces: [pc(t), { k: 'follow', t: 'Want another?', p: P.follow, o: 9 }], expr: 'wink' };
+    }
+    if (kind === 'offerphoto') {
+      const yes = topHit === 'yes' || /^(yes|yeah|yep|yup|sure|ok|okay|please|show|send|do it|go on|why not|definitely|absolutely|of course|mhm|y|show me|send it|send one)\b/.test(a.l);
+      const no = topHit === 'no' || /^(no|nah|nope|not now|maybe later|i'?m good)\b/.test(a.l);
+      if (no) return { pieces: [pc(pickAck(S.no_generic, {}))], expr: 'neutral' };
+      if (!yes) return null;
+      const r = photoPieces(this, 'photo_request', { l: '', raw: '' }, X, fx, { outfit: p.outfit });
+      return { pieces: r.pieces, expr: r.expr };
     }
     if (kind === 'joke') {
       conv.pending = { type: 'yesno:joke' };
@@ -867,6 +888,7 @@ export class Engine {
       if (fol && len >= 2 && main !== fol.t) bubbles.push(applyStyle(fol.t, X, { ...opts, emo: true }));
     } else if (fol && main !== fol.t) bubbles[0] = tidy(bubbles[0] + ' ' + applyStyle(fol.t, X, { ...opts, emo: true }));
 
+    if (fx.bubbles?.length) bubbles = fx.bubbles.map((t) => (/\n/.test(t) ? t : applyStyle(t, X, { ...opts, emo: true })));
     const expr = meta.expr || fx.expression || 'neutral';
     fx.expression = expr;
     const emoji = meta.noEmoji ? '' : emojiFor(expr, X, opts);

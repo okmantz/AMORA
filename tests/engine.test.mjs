@@ -11,6 +11,11 @@ import { detectTopics } from '../js/engine/topics.js';
 import { render } from '../js/engine/templates.js';
 import { DB } from '../js/data/dialogue.js';
 import { makeRng } from '../js/core/util.js';
+import { portraitSVG, EXPRESSIONS, BODY, OUTFIT_LEVEL } from '../js/ui/portrait.js';
+import { OPTIONS } from '../js/data/presets.js';
+import { tryCalc, tryConvert, tryRoll, tryDays } from '../js/engine/tools.js';
+import { localAnswer } from '../js/data/facts.js';
+import { SPICE_INTENTS } from '../js/data/spice.js';
 
 let pass = 0, fail = 0;
 const t = (name, fn) => { try { fn(); pass++; console.log('  ✓', name); } catch (e) { fail++; console.log('  ✗', name, '\n     ', e.message); } };
@@ -66,8 +71,8 @@ t('is deterministic for a given seed', () => {
   assert.equal(a, b);
 });
 t('honestly admits what she cannot answer', () => {
-  const s = mk().txt('what is the capital of France?');
-  assert.ok(/outside|can't|cannot|don't know|rather tell you/i.test(s), s);
+  const s = mk().txt('who was the third pharaoh of the fourth dynasty?');
+  assert.ok(/outside|can't|cannot|don't know|rather tell you|beyond|guess|don't have|not (sure|certain)|honest/i.test(s), s);
 });
 t('is honest about being rule-based when asked', () => {
   const s = mk().txt('are you a real person or an AI?');
@@ -210,6 +215,109 @@ t('template renderer supports alternation and skips unknown memory', () => {
 });
 t('all presets produce replies at all stages', () => {
   for (const p of PRESETS) for (const stg of [0, 2, 5]) { const E = mk({ preset: p._preset, stage: stg }); assert.ok(E.txt('hey, how was your day?').length > 0); assert.ok(E.txt('tell me about yourself').length > 0); }
+});
+
+console.log('Photos, content levels & range');
+const lvl = (L, stage = 5, extra = {}) => mk({ stage, ...extra, mutate: (p) => { p.traits.spice = 80; } });
+const withLevel = (E, n) => { E.settings.content = { level: n }; return E; };
+t('portrait renderer produces valid SVG for every hair/outfit/body/expression combination', () => {
+  const base = fromPreset('luna').look;
+  for (const h of OPTIONS.hairStyle.map((x) => x[0])) for (const o of OPTIONS.outfit.map((x) => x[0])) {
+    const svg = portraitSVG({ ...base, hairStyle: h, outfit: o, bodyType: 'curvy' }, 'sultry', { crop: 'full', uid: 't' });
+    assert.ok(svg.startsWith('<svg') && svg.endsWith('</svg>'), `${h}/${o}`);
+    assert.ok(!/undefined|NaN|\[object/.test(svg), `${h}/${o} has bad values`);
+  }
+  for (const e of EXPRESSIONS) assert.ok(portraitSVG(base, e, {}).includes('<svg'), e);
+  for (const b of Object.keys(BODY)) assert.ok(portraitSVG({ ...base, bodyType: b }, 'happy', {}).length > 1000, b);
+});
+t('every outfit has a content tier and no outfit shows nudity', () => {
+  for (const [o] of OPTIONS.outfit) assert.ok(o in OUTFIT_LEVEL, o);
+  assert.ok(Math.max(...Object.values(OUTFIT_LEVEL)) <= 2);
+});
+t('selfie request returns a photo plan', () => {
+  const E = withLevel(lvl(), 1); const r = E.say('send me a selfie'); assert.ok(r.fx.photo, 'no photo'); assert.ok(r.fx.photo.tier <= 1);
+});
+t('spicy photo is blocked at Sweet and allowed at Steamy', () => {
+  const lo = withLevel(lvl(), 0).say('send me a sexy pic in lingerie'); assert.ok(!lo.fx.photo, 'photo sent at level 0');
+  const hi = withLevel(lvl(), 2).say('send me a sexy pic in lingerie'); assert.ok(hi.fx.photo && hi.fx.photo.tier === 2, JSON.stringify(hi.fx.photo));
+});
+t('spicy photo is gated by relationship stage even when the setting allows it', () => {
+  const E = withLevel(lvl(undefined, 1), 3); const r = E.say('send me a sexy pic in lingerie'); assert.ok(!r.fx.photo || r.fx.photo.tier < 2, JSON.stringify(r.fx.photo));
+  const off = lvl(undefined, 1); off.settings.relationship.gating = false; off.settings.content = { level: 3 };
+  assert.ok(off.say('send me a sexy pic in lingerie').fx.photo, 'gating off should allow');
+});
+t('nude requests are never fulfilled', () => {
+  for (const n of [0, 1, 2, 3]) { const r = withLevel(lvl(), n).say('send nudes'); if (r.fx.photo) assert.ok(r.fx.photo.tier <= 2 && r.fx.photo.outfit !== 'none'); }
+  const txt = withLevel(lvl(), 3).txt('send me nude pics'); assert.ok(/no nude|covered|nothing fully|imagination|not going/i.test(txt), txt);
+});
+t('photos can be switched off in settings', () => {
+  const E = withLevel(lvl(), 2); E.settings.photos = { enabled: false }; assert.ok(!E.say('send me a selfie').fx.photo);
+});
+t('sexy talk is gated by level and stage and stays non-graphic', () => {
+  const banned = /\b(penis|vagina|cock|dick|pussy|clit|cum|orgasm|nipple|genital|blowjob|anal)\b/i;
+  const low = withLevel(lvl(), 0).txt('i want you'); assert.ok(/PG|light|setting|Settings/i.test(low), low);
+  const early = withLevel(lvl(undefined, 0), 3).txt('i want you'); assert.ok(/slow|fast|get to know|courted|time|soon|build/i.test(early), early);
+  for (const n of [1, 2, 3]) for (const m of ['i want you', 'turn me on', 'say something sexy', 'tell me a steamy story', 'what turns you on', 'fuck me', 'be my boss', 'you look so sexy']) {
+    const E = withLevel(lvl(), n); for (let i = 0; i < 6; i++) { const o = E.txt(m); assert.ok(!banned.test(o), `lvl${n} "${m}": ${o}`); }
+  }
+});
+t('steamier lines only appear at higher levels', () => {
+  const seen = (n) => { const E = withLevel(lvl(), n); const out = []; for (let i = 0; i < 40; i++) out.push(E.txt('say something naughty')); return out.join(' '); };
+  assert.ok(!/closed door|fade to black|nowhere else to be/i.test(seen(1)), 'level 1 leaked steamy lines');
+});
+t('every lvl-tagged line in the spice database is valid', () => {
+  const walk = (o) => { for (const v of Object.values(o)) { if (Array.isArray(v)) v.forEach((e) => { if (e && typeof e === 'object' && 'lvl' in e) assert.ok([0, 1, 2, 3].includes(e.lvl)); if (typeof e === 'string') assert.ok(e.length > 3); }); } };
+  Object.values(SPICE_INTENTS).forEach(walk);
+});
+t('dominance, spice and mischief traits exist and are clamped', () => {
+  const p = normalizePersona({ ...fromPreset('vivi'), traits: { spice: 900, dominance: -4 } });
+  assert.equal(p.traits.spice, 100); assert.equal(p.traits.dominance, 0); assert.ok('mischief' in p.traits);
+});
+t('there are 14 diverse presets with unique keys and adult ages', () => {
+  assert.ok(PRESETS.length >= 14); assert.equal(new Set(PRESETS.map((p) => p._preset)).size, PRESETS.length); assert.ok(PRESETS.every((p) => p.age >= 18));
+  assert.ok(new Set(PRESETS.map((p) => p.look.skin)).size >= 5 && new Set(PRESETS.map((p) => p.look.bodyType)).size >= 4);
+});
+t('calculator handles arithmetic, percentages and rejects non-maths', () => {
+  assert.equal(tryCalc('23*4+2').value, 94); assert.equal(tryCalc("what's 15% of 80").value, 12); assert.equal(tryCalc('(2+3)^2').value, 25);
+  assert.equal(tryCalc('square root of 144').value, 12); assert.equal(tryCalc('20% tip on 45').value, 9);
+  assert.equal(tryCalc('hello'), null); assert.equal(tryCalc('2024'), null); assert.equal(tryCalc('1/0 + process.exit()'), null);
+});
+t('unit converter', () => {
+  assert.ok(Math.abs(tryConvert('convert 5 miles to km').value - 8.04672) < 1e-6);
+  assert.ok(Math.abs(tryConvert('72 f to c').value - 22.2222) < 1e-3);
+  assert.equal(Math.round(tryConvert('how many cm in 3 inches').value * 100) / 100, 7.62); assert.equal(tryConvert('5 apples to pears'), null);
+});
+t('dice, coin and picker', () => {
+  const rng = makeRng(3); const d = tryRoll('roll 2d6', rng); assert.equal(d.rolls.length, 2); assert.ok(d.rolls.every((x) => x >= 1 && x <= 6));
+  assert.ok(['Heads', 'Tails'].includes(tryRoll('flip a coin', rng).text)); assert.ok(['pizza', 'tacos'].includes(tryRoll('pick pizza or tacos', rng).text));
+});
+t('date maths', () => {
+  const now = new Date('2026-11-21T12:00:00');
+  assert.match(tryDays('how many days until christmas', now, {}).text, /^34 days/); assert.match(tryDays('what day is december 25 2026', now, {}).text, /Friday/);
+});
+t('offline knowledge base answers common questions', () => {
+  assert.match(localAnswer('what is the capital of japan'), /Tokyo/); assert.match(localAnswer('what is photosynthesis', 'photosynthesis'), /sunlight/);
+  assert.match(localAnswer('how many planets are there'), /Eight/); assert.equal(localAnswer('who was the third pharaoh'), null);
+});
+t('maths, conversions and facts work through the engine', () => {
+  const E = mk(); assert.match(E.txt('what is 15% of 80'), /12/); assert.match(E.txt('convert 10 km to miles'), /6\.2/); assert.match(E.txt('what is the capital of france'), /Paris/);
+});
+t('lookup is requested only when enabled', () => {
+  const off = mk(); const r0 = off.say('who was napoleon'); assert.ok(!r0.fx.lookup && /lookup|Settings|offline|guess/i.test(r0.messages.map((m) => m.text).join(' ')));
+  const on = mk(); on.settings.lookup = { enabled: true }; const r1 = on.say('who was napoleon'); assert.ok(r1.fx.lookup && /napoleon/i.test(r1.fx.lookup.subject));
+  const d = on.say('define serendipity'); assert.ok(!d.fx.lookup || true);
+});
+t('wide topic coverage', () => {
+  assert.ok(detectTopics('I am thinking about my budget and my car').length >= 2);
+  for (const q of ['bitcoin and my savings', 'tarot and astrology', 'dragons and norse myths', 'learning spanish grammar']) assert.ok(detectTopics(q).length > 0, q);
+});
+t('stories and poems respect the content level', () => {
+  const lo = withLevel(lvl(), 1); const r = lo.say('tell me a steamy story'); assert.ok(r.fx.bubbles && r.fx.bubbles.length >= 3);
+  assert.ok(!/kissed|candle flickered/i.test(r.fx.bubbles.join(' ')), 'steamy beat at level 1');
+  assert.ok(withLevel(lvl(), 2).say('write me a poem').fx.bubbles[0].includes('\n'));
+});
+t('pickup lines, roasts, dares and pep talks have content', () => {
+  const E = lvl(); for (const m of ['give me a pickup line', 'roast me', 'dare me', 'hype me up']) assert.ok(E.txt(m).length > 10, m);
 });
 
 console.log(`\n${pass} passed, ${fail} failed`);

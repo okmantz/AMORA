@@ -27,6 +27,7 @@ export function tidy(s) {
 export function eligible(e, X) {
   if (e.min != null && X.stage < e.min) return false;
   if (e.max != null && X.stage > e.max) return false;
+  if (e.lvl != null && (X.level ?? 1) < e.lvl) return false;
   if (e.mode) { const m = Array.isArray(e.mode) ? e.mode : [e.mode]; if (!m.includes(X.mode)) return false; }
   if (e.tr) for (const [k, [lo, hi]] of Object.entries(e.tr)) { const v = X.traits[k] ?? 50; if (v < lo || v > hi) return false; }
   return true;

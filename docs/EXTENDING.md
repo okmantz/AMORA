@@ -129,3 +129,12 @@ Avatar parts live in `js/ui/avatar.js` (hairstyles, outfits, accessories, expres
 - `npm test` passes.
 - Add new files to the `SHELL` list in `sw.js` and bump `VERSION` so the offline cache refreshes.
 - Keep every setting wired: a control must change `persona`/`settings` **and** influence the engine or UI.
+
+
+## Photos, outfits and content levels
+
+- **Outfits** live in `js/ui/portrait.js` (`garment()` draws one; `OUTFIT_LEVEL` assigns tier 0–2). Add the option to `OPTIONS.outfit` in `js/data/presets.js`; tests fail if an outfit has no tier.
+- **Photo intents** are in `js/data/spice.js`; planning and gating are in `planPhoto()` in `js/engine/spice.js`. The engine returns a *recipe* (`fx.photo`); the UI renders it from her current look.
+- **Level-gated lines**: give any dialogue entry `{ t: '...', lvl: 2 }`. It is eligible only when the effective level (setting capped by relationship stage) is at least that value, and weighted up when it matches exactly.
+- **New abilities**: offline tools in `js/engine/tools.js`; facts in `js/data/facts.js`; extra topics in `js/data/topics-extra.js`; intents in `js/engine/intents.js` with pools in `js/data/range.js`.
+- Add a file to `js/` or `css/`? Add it to `SHELL` in `sw.js` and bump `VERSION`.

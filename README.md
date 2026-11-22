@@ -2,16 +2,24 @@
 
 A premium, mobile-messaging-style web app where you build a fictional companion — her look, personality, interests and voice — and chat with her. It is **pure HTML, CSS and vanilla JavaScript**, hosted as static files on **GitHub Pages**.
 
-> **Honest by design.** AMORA contains **no AI, no language model, no external API, no backend and no tracking.** Every reply is built by a hand-written rule engine from a dialogue database, your personality settings and a small local memory. She does not understand language the way a person does, and she says so. Everything is stored in your browser's `localStorage`.
+> **Honest by design.** AMORA contains **no AI, no language model, no backend and no tracking.** Every reply is built by a hand-written rule engine from a dialogue database, your personality settings and a small local memory. She does not understand language the way a person does, and she says so. Everything is stored in your browser's `localStorage`. The only optional network feature is **Knowledge lookup** (Wikipedia / dictionary), which is **off by default** and sends only the subject of your question.
 > AMORA is for adults only (18+). Characters are always adults.
+
+## What's new in v2
+
+- **Accounts** — create a username + password on first launch; every companion, setting, memory and chat is saved under your account on this device. Passwords are hashed with PBKDF2-SHA256 (150k iterations) and never stored in plain text. Switch accounts or log out in **Settings → Account**.
+- **New avatar engine** (`js/ui/portrait.js`) — fashion-illustration portraits with 14 hairstyles (afro, box braids, curls, pixie, buzz…), 5 body types from slender to plus-size, makeup styles, lip colors, freckles, beauty marks, satin/lace outfits and 11 expressions. 14 diverse presets.
+- **Photos** — ask her for a selfie, a gym pic, a beach pic, "what are you wearing" or a spicy pic from the **camera button** or in plain words. Photos are drawn from her *current* look, open in a lightbox and can be saved as PNG.
+- **Content levels** — *Sweet / Flirty / Steamy / Spicy* in Settings (and onboarding). Relationship stage still caps it unless gating is turned off in **Her → Relationship**.
+- **Wider range** — new traits (spice, dominance, mischief), ~20 new intents (pickup lines, roasts, hype, dares, confessions, stories, poems), 18 extra topics, a calculator, unit converter, dice/coin/picker, date maths and an offline fact base.
 
 ## Features at a glance
 
 | Area | What you get |
 |---|---|
 | **Design** | Luxury rose/gold aesthetic, light + dark + auto themes, 12 accent colors + custom picker, 3 typefaces, text-size slider, 3 bubble styles, 8 chat backgrounds, pattern overlays, your own background image (blur/dim), reduced-motion option, fully responsive (desktop rail, mobile tab bar) |
-| **Her** | Name, age (18+), bio, procedural SVG avatar (8 hairstyles, 6 outfits, 7 accessories, skin/hair/eye/outfit colors, 8 aesthetics, 9 live expressions), monogram or uploaded avatar |
-| **Personality** | 11 trait sliders (affection, humor, sarcasm, intelligence, playfulness, romance, confidence, shyness, expressiveness, curiosity, empathy) — each changes which lines are chosen |
+| **Her** | Name, age (18+), bio, procedural SVG avatar (14 hairstyles, 14 outfits, 5 body types, makeup, freckles, 11 live expressions), monogram or uploaded avatar |
+| **Personality** | 14 trait sliders (spice, dominance, mischief plus affection, humor, sarcasm, intelligence, playfulness, romance, confidence, shyness, expressiveness, curiosity, empathy) — each changes which lines are chosen |
 | **Interests** | Hobbies, music, movies, books, activities, foods — used in her own opinions and answers |
 | **Style** | Vocabulary (casual / sweet / poetic / playful / refined …), response length 1–5, emoji frequency and favorites, pet names, flirt frequency, catchphrases, lowercase typing |
 | **Relationship** | Status (just met → married/custom), 6 progression stages, auto or manual, speed and daily caps, content gating, shared memories / inside jokes, 17 milestones, 6 conversation modes |
@@ -72,10 +80,10 @@ index.html  manifest.webmanifest  sw.js  .nojekyll
 css/styles.css
 icons/                      PWA icons
 js/app.js                   state, persistence, theming, navigation, send/reply pipeline
-js/core/                    util, store (localStorage), io (import/export)
-js/engine/                  engine, intents, topics, templates, style, memory, rules, relationship, text
-js/data/                    dialogue.js (intent pools), topics-data.js, system-data.js, presets.js
-js/ui/                      chat, her, dialogue, memory, journal, history, settings, onboarding, avatar, dom
+js/core/                    util, store (per-account localStorage), auth (PBKDF2), lookup (opt-in), io
+js/engine/                  engine, intents, spice (photos/heat/lookup), tools (calc/convert/dice), topics, templates, style, memory, rules, relationship, text
+js/data/                    dialogue.js, spice.js, range.js (intent pools), topics-data.js, topics-extra.js, facts.js, system-data.js, presets.js
+js/ui/                      chat, her, dialogue, memory, journal, history, settings, onboarding, auth, portrait, avatar, dom
 tests/                      engine.test.mjs (npm test), play.mjs (interactive harness)
 docs/                       EXTENDING.md (add dialogue, intents, topics, rules), ENGINE.md (how replies are built)
 .github/workflows/pages.yml GitHub Pages deployment
@@ -92,9 +100,17 @@ printf "hi\nI love hiking\nwhat do you know about me?\n" | node tests/play.mjs l
 #                                                          preset stage seed
 ```
 
+## Content & limits (read this)
+
+- **Photos are illustrations** drawn by the app from her look — not real or AI-generated photographs.
+- The **Spicy** tier means lingerie, swimwear and boudoir poses. She stays **covered**; nude requests get an in-character no and a covered photo.
+- Steamy dialogue is suggestive but **not graphic** and fades to black. All characters are 18+.
+- "Anything" is bounded: without an LLM she can chat about ~40 topics, do maths/conversions, and answer many common facts offline. Turn on **Knowledge lookup** for Wikipedia/dictionary answers; otherwise she says honestly when something is beyond her.
+- **Accounts are local to the device.** The password gates the app; it does **not** encrypt browser storage, and there is no password recovery. Use **Full backup** to move data to another device.
+
 ## Privacy
 
-All data stays in your browser (`localStorage`, keys prefixed `amora.v1.`). There are no network requests other than loading the app's own files. Use **Settings → Full backup** to move your data between devices, and **Erase everything** to wipe it.
+All data stays in your browser (`localStorage`, keys prefixed `amora.v1.`, with each account in its own namespace). There are no network requests other than loading the app's own files — plus the optional, off-by-default Knowledge lookup. Use **Settings → Full backup** to move your data between devices, and **Erase everything** to wipe it.
 
 ## License
 

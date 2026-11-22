@@ -58,11 +58,16 @@ export function render(A) {
         fChips('Hairstyle', OPTIONS.hairStyle, () => L.hairStyle, (v) => { L.hairStyle = v; commit(); }),
         fSwatches('Hair color', OPTIONS.hairColor, () => L.hairColor, (v) => { L.hairColor = v; commit(); }),
         fSwatches('Eye color', OPTIONS.eyeColor, () => L.eyeColor, (v) => { L.eyeColor = v; commit(); }),
+        fChips('Body type', OPTIONS.bodyType, () => L.bodyType || 'average', (v) => { L.bodyType = v; commit(); }),
+        fChips('Makeup', OPTIONS.makeup, () => L.makeup || 'glam', (v) => { L.makeup = v; commit(); }),
+        fSwatches('Lip color', OPTIONS.lipColor, () => L.lip || '#c0506b', (v) => { L.lip = v; commit(); }),
+        fToggle('Freckles', '', () => !!L.freckles, (v) => { L.freckles = v; commit(); }),
+        fToggle('Beauty mark', '', () => !!L.beautyMark, (v) => { L.beautyMark = v; commit(); }),
         fChips('Clothing', OPTIONS.outfit, () => L.outfit, (v) => { L.outfit = v; commit(); }),
         fSwatches('Clothing color', OPTIONS.outfitColors, () => L.outfitColor, (v) => { L.outfitColor = v; commit(); }),
         fChips('Accessory', OPTIONS.accessory, () => L.accessory, (v) => { L.accessory = v; commit(); }),
         fChips('Aesthetic', OPTIONS.aesthetic, () => L.aesthetic, (v) => { L.aesthetic = v; commit(); }, 'Sets her avatar backdrop colors and how she describes her style.'),
-        h('button', { class: 'btn', onclick: () => { Object.assign(L, { skin: rnd(OPTIONS.skin)[0], hairStyle: rnd(OPTIONS.hairStyle)[0], hairColor: rnd(OPTIONS.hairColor)[0], eyeColor: rnd(OPTIONS.eyeColor)[0], outfit: rnd(OPTIONS.outfit)[0], outfitColor: rnd(OPTIONS.outfitColors), accessory: rnd(OPTIONS.accessory)[0], aesthetic: rnd(OPTIONS.aesthetic)[0] }); commit(); paint(); } }, icon('dice', 16), 'Randomize look')));
+        h('button', { class: 'btn', onclick: () => { Object.assign(L, { skin: rnd(OPTIONS.skin)[0], hairStyle: rnd(OPTIONS.hairStyle)[0], hairColor: rnd(OPTIONS.hairColor)[0], eyeColor: rnd(OPTIONS.eyeColor)[0], outfit: rnd(OPTIONS.outfit.filter((o) => ['tee','sweater','hoodie','blazer','sundress','dress','offshoulder','camisole'].includes(o[0])))[0], bodyType: rnd(OPTIONS.bodyType)[0], makeup: rnd(OPTIONS.makeup)[0], lip: rnd(OPTIONS.lipColor), freckles: Math.random() < 0.3, outfitColor: rnd(OPTIONS.outfitColors), accessory: rnd(OPTIONS.accessory)[0], aesthetic: rnd(OPTIONS.aesthetic)[0] }); commit(); paint(); } }, icon('dice', 16), 'Randomize look')));
   }
 
   /* -------------------------- try-it widget -------------------------- */

@@ -29,10 +29,13 @@ export const TOPICS = [
   T('future', 'The future', '🔮', 'future|tomorrow|next year|retire|plans?\\b|someday|moving|move to|new chapter|five years|goals?\\b|hope to|going to be|planning|saving up|buy a house|relocat'),
 ];
 
+import { EXTRA_TOPICS } from '../data/topics-extra.js';
+TOPICS.push(...EXTRA_TOPICS);
 export const TOPIC_MAP = Object.fromEntries(TOPICS.map((t) => [t.id, t]));
 
 /** Returns [{id, score}] sorted, based on keyword hits. */
 export function detectTopics(text) {
+  text = text.replace(/\bhow (?:does|do|did) [\w\s'-]{1,40}? work(?:s)?\b/gi, ' ');
   const out = [];
   for (const t of TOPICS) {
     const m = text.match(new RegExp(t.re.source, 'gi'));
