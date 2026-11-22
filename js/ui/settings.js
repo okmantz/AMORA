@@ -2,7 +2,8 @@
 import { h, pickFile, readText, resizeImage } from '../core/util.js';
 import { Store, defaultSettings } from '../core/store.js';
 import { OPTIONS } from '../data/presets.js';
-import { fSelect, fSwatches, fSlider, fToggle, fChips, section, toast, confirmBox, icon, modal } from './dom.js';
+import { fSelect, fSwatches, fSlider, fToggle, fChips, fText, section, toast, confirmBox, icon, modal } from './dom.js';
+import { Discreet, DISGUISES } from '../core/discreet.js';
 import { Auth } from '../core/auth.js';
 import { exportBackup, importBackup, parseFile, exportThreadsJSON } from '../core/io.js';
 
@@ -37,6 +38,36 @@ export function render(A) {
       h('small', { class: 'muted', style: { display: 'block', marginTop: '10px' } }, 'Accounts are stored on this device. To use yours elsewhere, download your data here, then create an account on the other device and use “Restore backup”. Your password protects access to the app; it does not encrypt browser storage.'));
   };
   paintAcct();
+  /* ---------------------------- discreet mode ---------------------------- */
+  const dis = h('div');
+  const D = () => s().discreet;
+  const dApply = () => { A.save('settings'); A.applyTheme(); };
+  const paintDis = () => {
+    dis.innerHTML = '';
+    const d = D();
+    dis.append(
+      h('p', { class: 'muted', style: { marginTop: 0 } }, 'Makes the whole app look like an ordinary utility so nobody glancing at your screen can tell what it is. Everything below can be tuned.'),
+      fToggle('Discreet mode', 'Master switch. Disguises the app and turns on the protections below.', () => d.enabled, (v) => { if (v && !d.enabled) { d.enabled = true; dApply(); modal({ title: 'Discreet mode is on', size: 'sm', body: h('div', h('p', 'To hide the app instantly: press Esc twice, or tap the eye button in the chat header. Switching to another app or tab hides it automatically.'), h('p', 'To come back from the decoy screen: tap its title five times quickly (on the calculator you can also do that on the display, or type your code and press =).'), h('p', { class: 'muted' }, 'Tip: set an unlock code below so nobody else can get back in.')), actions: [{ label: 'Got it', kind: 'primary' }] }); paintDis(); A.go('settings', true); } else if (!v) { d.enabled = false; dApply(); A.go('settings', true); } }),
+      d.enabled && h('div',
+        fChips('Disguise as', Object.entries(DISGUISES).map(([k, v]) => [k, v.name]), () => d.disguise, (v) => { d.disguise = v; dApply(); }, 'Changes the tab title, icon, sign-in screen, install name and the decoy screen.'),
+        fText('Show her name as', () => d.alias, (v) => { d.alias = v; A.save('settings'); }, { placeholder: 'e.g. Alex (leave empty to keep her name)', max: 30, hint: 'Only changes what appears on screen.' }),
+        fToggle('Plain look', 'Neutral grey-blue colours, initials instead of her photo, no patterns or hearts.', () => d.plain, (v) => { d.plain = v; dApply(); A.go('settings', true); }),
+        fToggle('Blur messages', 'Message text stays blurred until you tap it (or hover on a computer).', () => d.blur, (v) => { d.blur = v; dApply(); }),
+        fToggle('Veil photos', 'Photos show as a plain “Attachment” until you tap them, and re-hide after a few seconds.', () => d.hidePhotos, (v) => { d.hidePhotos = v; dApply(); }),
+        fToggle('Plain text', 'Her replies come without emoji.', () => d.plainText, (v) => { d.plainText = v; A.save('settings'); }),
+        fToggle('Neutral labels', 'Menu names, chat titles and the address bar stay generic (Messages, Overview, “Chat · Nov 22”).', () => d.neutralLabels, (v) => { d.neutralLabels = v; dApply(); A.go('settings', true); }),
+        fToggle('Hide when I switch away', 'Covers the app with the decoy the moment the tab or app goes to the background (also hides it in the app switcher).', () => d.autoCover, (v) => { d.autoCover = v; A.save('settings'); }),
+        fSelect('Hide after being idle', [['0', 'Never'], ['1', '1 minute'], ['2', '2 minutes'], ['5', '5 minutes'], ['10', '10 minutes'], ['30', '30 minutes']], () => String(d.idleMin), (v) => { d.idleMin = +v; A.save('settings'); }),
+        fToggle('Hide button in chat', 'An eye icon in the chat header for one-tap hiding.', () => d.quickButton, (v) => { d.quickButton = v; A.save('settings'); }),
+        fToggle('Esc twice hides', 'Press Escape twice quickly on a keyboard.', () => d.escHide, (v) => { d.escHide = v; A.save('settings'); }),
+        fToggle('Hiding also signs out', 'Hide now signs you out, so your account password is needed to return. Automatic hides (switching apps, idle) still show the decoy.', () => d.panicSignOut, (v) => { d.panicSignOut = v; A.save('settings'); }),
+        h('div', { class: 'row wrap', style: { margin: '10px 0' } },
+          h('button', { class: 'btn', onclick: () => pwModal(Discreet.hasPin() ? 'Change unlock code' : 'Set unlock code', [['New code (3–8 digits)', 'off']], 'Save code', async ([c]) => { if (!/^\d{3,8}$/.test(c)) throw new Error('Use 3 to 8 digits.'); await Discreet.setPin(c); A.save('settings'); toast('Unlock code saved'); paintDis(); }) }, icon('lock', 16), Discreet.hasPin() ? 'Change unlock code' : 'Set unlock code'),
+          Discreet.hasPin() && h('button', { class: 'btn ghost', onclick: async () => { await Discreet.setPin(null); A.save('settings'); toast('Unlock code removed'); paintDis(); } }, 'Remove code'),
+          h('button', { class: 'btn primary', onclick: () => Discreet.cover() }, icon('eyeoff', 16), 'Hide now')),
+        h('small', { class: 'muted' }, 'Honest limits: this hides the screen from onlookers; it does not encrypt your data on this device. An installed app keeps the name and icon it had when installed — install it while Discreet mode is on. Your browser’s own history still records the site address.')));
+  };
+  paintDis();
   const bgBox = h('div');
   const paintBg = () => {
     bgBox.innerHTML = '';
@@ -53,6 +84,7 @@ export function render(A) {
 
   page.append(h('div', { class: 'view-head' }, h('div', h('h2', 'Settings'), h('p', 'Account, appearance, chat behavior and your data.'))),
     section('Account', acct),
+    section('Discretion', dis),
     section('Appearance',
       fChips('Theme', [['auto', 'Match device'], ['light', 'Light'], ['dark', 'Dark']], () => s().theme, (v) => { s().theme = v; apply(); }),
       fSwatches('Accent color', OPTIONS.accents, () => s().accent, (v) => { s().accent = v; apply(); }),

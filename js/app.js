@@ -10,6 +10,7 @@ import { PRESETS, fromPreset, normalizePersona, blankPersona } from './data/pres
 import { SYS } from './data/system-data.js';
 import { shade } from './ui/avatar.js';
 import { icon, toast, modal } from './ui/dom.js';
+import { Discreet } from './core/discreet.js';
 
 const VIEWS = {
   chat: () => import('./ui/chat.js'),
@@ -271,17 +272,21 @@ export const A = {
     root.dataset.theme = dark ? 'dark' : 'light';
     root.dataset.font = s.font; root.dataset.bubble = s.bubbleStyle; root.dataset.pattern = s.bg.pattern || 'none';
     root.style.setProperty('--fs', `${(16 * s.fontScale) / 100}px`);
-    const ac = /^#[0-9a-f]{6}$/i.test(s.accent) ? s.accent : '#c2577a';
+    const plain = Discreet.opt('plain');
+    root.classList.toggle('d-plain', plain);
+    if (plain) { root.dataset.font = 'sans'; root.dataset.pattern = 'none'; }
+    const ac = plain ? '#5b6b7f' : /^#[0-9a-f]{6}$/i.test(s.accent) ? s.accent : '#c2577a';
     const n = parseInt(ac.slice(1), 16);
     root.style.setProperty('--accent', ac);
     root.style.setProperty('--accent-rgb', `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`);
     root.style.setProperty('--accent-dark', shade(ac, -22)); root.style.setProperty('--accent-light', shade(ac, 30));
-    const bg = s.bg;
+    const bg = plain ? { ...s.bg, preset: 'plain', kind: 'preset', image: null, pattern: 'none' } : s.bg;
     root.style.setProperty('--chat-bg', `var(--bg-${(bg.preset || 'rose-dusk')})`);
     root.style.setProperty('--chat-bg-img', bg.kind === 'image' && bg.image ? `url("${bg.image}")` : 'none');
     root.style.setProperty('--bg-blur', `${bg.blur || 0}px`); root.style.setProperty('--bg-dim', String((bg.dim ?? 20) / 100));
     root.classList.toggle('reduce-motion', !!s.chat.reducedMotion);
     $('meta[name=theme-color]')?.setAttribute('content', dark ? '#130f14' : '#fbf5f3');
+    Discreet.apply();
   },
 
   /* ------------------------------ navigation ------------------------------ */
@@ -303,7 +308,7 @@ export const A = {
       host.append(h('div', { class: 'view' }, h('div', { class: 'card' }, h('h3', 'Something went wrong'), h('p', { class: 'muted' }, String(e.message || e)), h('button', { class: 'btn', onclick: () => location.reload() }, 'Reload'))));
     }
     this.paintNav();
-    try { history.replaceState(null, '', '#' + view); } catch { /* ignore */ }
+    try { history.replaceState(null, '', Discreet.on() ? location.pathname + location.search : '#' + view); } catch { /* ignore */ }
   },
   paintNav() {
     document.querySelectorAll('[data-nav]').forEach((b) => {
@@ -319,8 +324,8 @@ export const A = {
   mountShell() {
     const app = $('#app');
     app.innerHTML = '';
-    const navBtn = ([v, l, ic], mini) => h('button', { class: 'nav-btn', 'data-nav': v, onclick: () => (v === 'more' ? this.moreMenu() : this.go(v)), 'aria-label': l }, icon(ic, 22), h('span', l), v === 'chat' && h('i', { class: 'dot hidden' }));
-    const rail = h('nav', { class: 'rail', 'aria-label': 'Main' }, h('div', { class: 'logo' }, 'AMORA'), NAV.map((n) => navBtn(n)), h('div', { class: 'spacer' }),
+    const navBtn = ([v, l0, ic], mini) => { const l = Discreet.navLabel(v, l0); return h('button', { class: 'nav-btn', 'data-nav': v, onclick: () => (v === 'more' ? this.moreMenu() : this.go(v)), 'aria-label': l }, icon(ic, 22), h('span', l), v === 'chat' && h('i', { class: 'dot hidden' })); };
+    const rail = h('nav', { class: 'rail', 'aria-label': 'Main' }, h('div', { class: 'logo' }, Discreet.brand()), NAV.map((n) => navBtn(n)), h('div', { class: 'spacer' }),
       h('button', { class: 'nav-btn', onclick: () => this.toggleTheme(), 'aria-label': 'Toggle theme' }, icon('moon', 22), h('span', 'Theme')),
       h('button', { class: 'nav-btn', onclick: () => this.logout(), 'aria-label': 'Sign out', title: `Signed in as ${Auth.current?.username || ''}` }, icon('lock', 22), h('span', 'Sign out')));
     const main = h('main', { class: 'main', id: 'view-host' });
@@ -331,7 +336,7 @@ export const A = {
     app.append(rail, main, tabbar);
   },
   moreMenu() {
-    const body = h('div', { class: 'grid' }, ['journal', 'history', 'settings'].map((v) => { const n = NAV.find((x) => x[0] === v); return h('button', { class: 'item', style: { border: 0, width: '100%', textAlign: 'left' }, onclick: () => { m.close(); this.go(v); } }, icon(n[2], 22), h('span', { class: 't' }, h('b', n[1])), icon('chevron', 16)); }));
+    const body = h('div', { class: 'grid' }, ['journal', 'history', 'settings'].map((v) => { const n = NAV.find((x) => x[0] === v); return h('button', { class: 'item', style: { border: 0, width: '100%', textAlign: 'left' }, onclick: () => { m.close(); this.go(v); } }, icon(n[2], 22), h('span', { class: 't' }, h('b', Discreet.navLabel(v, n[1]))), icon('chevron', 16)); }));
     const m = modal({ title: 'More', body, size: 'sm' });
   },
   logout() { this.flush(); Auth.logout(); location.hash = ''; location.reload(); },
@@ -345,12 +350,14 @@ export const A = {
 /** Called once from index.html */
 export async function boot() {
   try {
+    Discreet.applyGlobal();
     if (!Store.available()) toast('Local storage is unavailable — nothing will be saved this session.', 'err');
     onStorageError(() => { /* surfaced in _write */ });
     hideSplash();
     let entry = Auth.resume() ? { created: false } : null;
     if (!entry) { const { authScreen } = await import('./ui/auth.js'); entry = await authScreen(); }
     A.load();
+    Discreet.init(A);
     if (entry.created && !entry.adopted) { A.settings.ageConfirmed = true; const d = Auth.current.display; if (d && d !== Auth.current.username) A.settings.userName = d; A.save('settings'); }
     if (entry.created && entry.adopted) { A.settings.ageConfirmed = true; A.save('settings'); }
     await loadPortraits(); // real-photo avatar library (falls back gracefully if missing)

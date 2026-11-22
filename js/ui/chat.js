@@ -6,6 +6,7 @@ import { portraitSVG, OUTFIT_LEVEL } from './portrait.js';
 import { pickPortrait, portraitsReady, portraitSrc, portraitFocus, allowedAtTier } from './photoreal.js';
 import { MODES, STAGES, stageProgress, effectiveStage, unlocked } from '../engine/relationship.js';
 import { SYS } from '../data/system-data.js';
+import { Discreet } from '../core/discreet.js';
 
 const EMOJIS = ['😊', '😂', '🥰', '😘', '😍', '😉', '🥺', '😭', '😅', '🤔', '😴', '😎', '🙈', '💕', '❤️', '✨', '🌹', '🎉', '👍', '🙏', '☕', '🌙', '🔥', '🤗'];
 
@@ -97,7 +98,7 @@ export function render(A) {
     listEl.innerHTML = '';
     A.threads().filter((t) => !q || t.title.toLowerCase().includes(q)).sort((a, b) => b.updated - a.updated).forEach((t) => {
       listEl.append(h('button', { class: `thread${t.id === thread.id ? ' on' : ''}`, role: 'listitem', onclick: () => { if (t.id !== thread.id) A.switchThread(t.id); else closeDrawer(); } },
-        h('b', t.title), h('span', h('span', fmtDay(t.updated)), h('span', `${t.messages.length} msgs`), t.mode !== 'casual' && h('span', MODES[t.mode]?.emoji)),
+        h('b', Discreet.threadTitle(t)), h('span', h('span', fmtDay(t.updated)), h('span', `${t.messages.length} msgs`), t.mode !== 'casual' && h('span', MODES[t.mode]?.emoji)),
         h('span', { class: 'icon-btn del', role: 'button', tabindex: 0, 'aria-label': 'Delete chat', onclick: async (e) => { e.stopPropagation(); if (await cb('Delete this conversation? This cannot be undone.', 'Delete', true)) { A.deleteThread(t.id); A.go('chat', true); } } }, icon('trash', 16))));
     });
     if (!listEl.children.length) listEl.append(h('p', { class: 'muted', style: { padding: '12px' } }, 'No conversations found.'));
@@ -118,7 +119,7 @@ export function render(A) {
 
   /* ----------------------- header ----------------------- */
   const headAv = avatarEl(persona(), 'neutral', { size: 46 });
-  const nameEl = h('h3', persona().name);
+  const nameEl = h('h3', Discreet.displayName(persona().name));
   const statusEl = h('div', { class: 'status' }, 'Online');
   const modeLbl = h('span', { class: 'lbl' });
   const modeBtn = h('button', { class: 'mode-pill', 'aria-haspopup': 'menu', onclick: (e) => modeMenu(e.currentTarget) }, h('span', { class: 'mode-em' }), modeLbl);
@@ -126,6 +127,7 @@ export function render(A) {
   const head = h('header', { class: 'chat-head' },
     h('button', { class: 'icon-btn threads-toggle', 'aria-label': 'Conversations', onclick: openDrawer }, icon('menu')),
     whoBtn, modeBtn,
+    Discreet.opt('quickButton') && h('button', { class: 'icon-btn', 'aria-label': 'Hide', title: 'Hide now (Esc twice)', onclick: () => Discreet.cover() }, icon('eyeoff')),
     h('button', { class: 'icon-btn', 'aria-label': 'Chat menu', onclick: (e) => chatMenu(e.currentTarget) }, icon('more')));
 
   function refreshHeader() {
@@ -134,7 +136,8 @@ export function render(A) {
     modeBtn.querySelector('.mode-em').textContent = M.emoji; modeLbl.textContent = M.label;
     const mood = thread.conv?.mood || 0;
     statusEl.textContent = mood > 0.35 ? 'Online · feeling happy' : mood < -0.35 ? 'Online · feeling for you' : 'Online';
-    nameEl.textContent = persona().name;
+    nameEl.textContent = Discreet.displayName(persona().name);
+    if (Discreet.opt('plain')) statusEl.textContent = 'Active';
     paintThreads();
   }
 
@@ -149,6 +152,7 @@ export function render(A) {
   function chatMenu(anchor) {
     const pop = popover(anchor, h('div',
       popItem('✨', 'New chat', 'Start a fresh conversation', () => { pop.close(); newChat(); }),
+      popItem('🛡️', Discreet.on() ? 'Turn off discreet mode' : 'Turn on discreet mode', 'Disguise the app, hide photos, blur text', () => { pop.close(); Discreet.setEnabled(!Discreet.on()); }),
       popItem('🎭', 'Scenarios', 'Coffee dates, stargazing and more', () => { pop.close(); scenarios(); }),
       popItem('🎲', 'Play a game', 'Would you rather', () => { pop.close(); A.send("Let's play would you rather"); }),
       popItem('💬', 'Conversation starter', 'Ask me something', () => { pop.close(); A.send('Ask me something'); }),
@@ -199,7 +203,18 @@ export function render(A) {
   function photoBubble(m) {
     const f = photoFor(persona(), m.photo);
     const box = h('button', { type: 'button', class: `photo-card tier${m.photo.tier || 0}${f && f.ratio > 1.15 && !f.tight ? ' wide' : ''}`, style: f && f.ratio > 1.15 && !f.tight ? { aspectRatio: String(f.ratio) } : {}, 'aria-label': 'Open photo', onclick: () => openPhoto(persona(), m.photo, m.id) });
-    box.innerHTML = photoMarkup(persona(), m.photo, 'p' + m.id);
+    const show = () => { box.innerHTML = photoMarkup(persona(), m.photo, 'p' + m.id); box.classList.remove('veiled'); };
+    if (Discreet.opt('hidePhotos')) {
+      let shown = false, timer;
+      box.classList.add('veiled');
+      box.innerHTML = '<span class="veil-lbl">Attachment · tap to view</span>';
+      box.onclick = () => {
+        if (!shown) { shown = true; show(); clearTimeout(timer); timer = setTimeout(() => { shown = false; box.classList.add('veiled'); box.innerHTML = '<span class="veil-lbl">Attachment · tap to view</span>'; }, 8000); }
+        else openPhoto(persona(), m.photo, m.id);
+      };
+      return box;
+    }
+    show();
     return box;
   }
   function addMessage(m, fromHer) {
@@ -227,7 +242,7 @@ export function render(A) {
     return el;
   }
 
-  const emptyEl = h('div', { class: 'sys', style: { margin: 'auto' } }, h('div', { style: { display: 'grid', placeItems: 'center', gap: '8px' } }, avatarEl(persona(), 'happy', { size: 96, cls: 'big' }), h('h3', `Say hi to ${persona().name}`), h('p', { class: 'muted', style: { margin: 0 } }, 'Type a message below, or pick a suggestion.')));
+  const emptyEl = h('div', { class: 'sys', style: { margin: 'auto' } }, h('div', { style: { display: 'grid', placeItems: 'center', gap: '8px' } }, avatarEl(persona(), 'happy', { size: 96, cls: 'big' }), h('h3', `Say hi to ${Discreet.displayName(persona().name)}`), h('p', { class: 'muted', style: { margin: 0 } }, 'Type a message below, or pick a suggestion.')));
   msgsEl.append(emptyEl, typingRow);
   thread.messages.forEach((m) => addMessage(m));
   emptyEl.classList.toggle('hidden', thread.messages.length > 0);
@@ -240,7 +255,7 @@ export function render(A) {
     if (!A.settings.chat.suggestions) return;
     A.engine.suggestions(A.ctx()).forEach((s) => sugEl.append(h('button', { onclick: () => A.send(s) }, s)));
   }
-  const ta = h('textarea', { rows: 1, placeholder: `Message ${persona().name}…`, 'aria-label': 'Message', maxlength: 2000 });
+  const ta = h('textarea', { rows: 1, placeholder: `Message ${Discreet.displayName(persona().name)}…`, 'aria-label': 'Message', maxlength: 2000 });
   const sendBtn = h('button', { class: 'send', 'aria-label': 'Send', disabled: true, onclick: submit }, icon('send', 20));
   function submit() { const v = ta.value.trim(); if (!v) return; ta.value = ''; grow(); sendBtn.disabled = true; A.send(v); ta.focus(); }
   function grow() { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 140) + 'px'; }
@@ -278,7 +293,7 @@ export function render(A) {
 
   paintThreads(); refreshHeader(); refreshSuggestions();
   A.chat = { addMessage, setTyping, refreshHeader, refreshSuggestions, setExpr };
-  const off = A.bus.on('persona-edit', () => { nameEl.textContent = persona().name; paintAvatar(headAv, persona(), 'neutral'); ta.placeholder = `Message ${persona().name}…`; });
+  const off = A.bus.on('persona-edit', () => { nameEl.textContent = Discreet.displayName(persona().name); paintAvatar(headAv, persona(), 'neutral'); ta.placeholder = `Message ${persona().name}…`; });
   void off; void uid; void promptBox;
   setTimeout(() => { A.maybeDaily(); if (matchMedia('(min-width: 821px)').matches) ta.focus(); }, 200);
   return root;

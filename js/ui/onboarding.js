@@ -3,6 +3,7 @@ import { h } from '../core/util.js';
 import { PRESETS, fromPreset } from '../data/presets.js';
 import { avatarEl } from './avatar.js';
 import { modal, icon, fChips } from './dom.js';
+import { Discreet } from '../core/discreet.js';
 
 export function onboarding(A) {
   return new Promise((resolve) => {
@@ -17,7 +18,7 @@ export function onboarding(A) {
     const go = h('button', { class: 'btn primary', disabled: !adult, onclick: finish }, 'Begin ', icon('chevron', 16));
     chk.addEventListener('change', () => { adult = chk.checked; go.disabled = !adult; });
     const body = h('div', { class: 'onboard' },
-      h('div', { class: 'logo' }, 'AMORA'),
+      h('div', { class: 'logo' }, Discreet.brand()),
       h('p', { class: 'muted' }, 'A customizable virtual companion who lives entirely on your device.'),
       h('div', { class: 'card', style: { textAlign: 'left', marginTop: '14px', marginBottom: '10px' } },
         h('p', { style: { margin: 0, fontSize: '.92rem' } }, h('b', 'Please note: '), 'AMORA is a fictional character powered by hand-written rules and templates — ', h('b', 'not AI'), '. She can chat about everyday things, remember what you tell her and react to your mood, but she does not truly understand and cannot discuss every subject. Everything is stored locally in your browser; nothing is sent anywhere unless you turn on Knowledge lookup in Settings.')),

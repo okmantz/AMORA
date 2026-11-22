@@ -3,6 +3,7 @@
 import { h } from '../core/util.js';
 import { portraitSVG, shade as _shade, EXPRESSIONS as _EX } from './portrait.js';
 import { pickPortrait, portraitsReady, portraitSrc, portraitFocus } from './photoreal.js';
+import { Discreet } from '../core/discreet.js';
 
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -32,6 +33,7 @@ export function avatarEl(persona, expr = 'neutral', { size = 48, cls = '' } = {}
 export function paintAvatar(el, persona, expr = 'neutral') {
   const L = persona.look;
   el.dataset.expr = expr;
+  if (Discreet.opt('plain')) { el.classList.remove('photo'); el.innerHTML = `<div class="av-mono d-mono"><span>${esc(Discreet.displayName(persona.name).trim().charAt(0).toUpperCase() || '?')}</span></div>`; return; }
   const kind = L.avatarKind === 'illustrated' ? 'photo' : L.avatarKind; // older saves used the drawn avatar
   if (kind === 'image' && L.avatarImage) { el.classList.remove('photo'); el.innerHTML = `<img src="${esc(L.avatarImage)}" alt="${esc(persona.name)}" class="av-img">`; return; }
   if (kind === 'monogram') { el.classList.remove('photo'); el.innerHTML = monogramHTML(persona.name, L); return; }

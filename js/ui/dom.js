@@ -44,6 +44,8 @@ const ICONS = {
   bell: '<path d="M6 17V11a6 6 0 0 1 12 0v6l1.5 2h-15z"/><path d="M10 21h4"/>',
   wand: '<path d="M5 19L17 7"/><path d="M15 5l1-2 1 2 2 1-2 1-1 2-1-2-2-1z"/>',
   play: '<path d="M7 5l12 7-12 7z"/>',
+  eyeoff: '<path d="M3 12s3.5-6 9-6c1.6 0 3 .5 4.2 1.2M21 12s-3.5 6-9 6c-1.6 0-3-.5-4.2-1.2"/><circle cx="12" cy="12" r="2.6"/><path d="M4 4l16 16"/>',
+  shield: '<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',
 };
 export const icon = (name, size = 20, cls = '') => {
   const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');

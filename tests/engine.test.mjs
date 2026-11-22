@@ -320,5 +320,43 @@ t('pickup lines, roasts, dares and pep talks have content', () => {
   const E = lvl(); for (const m of ['give me a pickup line', 'roast me', 'dare me', 'hype me up']) assert.ok(E.txt(m).length > 10, m);
 });
 
+console.log('Depth layer');
+t('depth intents are recognised', () => {
+  const id = (s) => matchIntents(s)[0]?.id;
+  assert.equal(id('recommend a romantic movie'), 'recommend');
+  assert.equal(id('how do you say I love you in french'), 'translate_phrase');
+  assert.equal(id('ask me a riddle'), 'riddle');
+  assert.equal(id('I feel so ugly today'), 'insecure');
+  assert.equal(id('my boss is driving me crazy and the deadline is killing me'), 'work_stress');
+  assert.equal(id('will you always be here'), 'commitment_q');
+  assert.equal(id('tea or coffee?'), 'choice_q');
+  assert.ok(INTENT_IDS.length >= 120, String(INTENT_IDS.length));
+});
+t('depth handlers answer practical and thoughtful questions', () => {
+  const E = mk();
+  assert.match(E.txt('how do I make scrambled eggs'), /eggs/i);
+  assert.match(E.txt('how do you say thank you in japanese'), /arigatou/);
+  assert.match(E.txt('what is love'), /choos|feeling|showing up/i);
+  assert.match(E.txt('write a message to apologize to my friend'), /sorry|apolog/i);
+  assert.match(E.txt('how can I sleep better'), /sleep|wake|screens/i);
+  const g = mk(); assert.match(g.txt('ask me a riddle'), /\?/); assert.ok(g.conv.pending?.type === 'riddle');
+  assert.match(g.txt('i give up'), /\./); assert.ok(!g.conv.pending || g.conv.pending.type !== 'riddle');
+});
+t('depth layer never leaks template placeholders or throws', () => {
+  const inputs = ['recommend a book', 'what should I wear to a wedding', 'what should I get my dad', 'things to do in Tokyo', 'do you like jazz', 'would you rather swim or fly', 'if you could travel anywhere', "what's your favorite animal", 'what are you afraid of', 'tell me about your family', 'help me calm down', 'asdfjkl', '😂', 'my brother is annoying', "I'm going to a wedding on Saturday", 'why is the sky blue', 'I think pineapple on pizza is overrated', 'i am a scorpio', 'tell me a fun fact', 'more', 'really?', 'sing me a song', 'it is my birthday today'];
+  for (const p of ['luna', ...Object.keys(PRESETS).slice(0, 4)]) for (const stage of [0, 2, 4]) {
+    const E = mk({ preset: p, stage, seed: 5 });
+    for (const q of inputs) { const out = E.txt(q); assert.ok(out.length > 3, `${p}/${stage}: ${q}`); assert.ok(!/[{}]|undefined|NaN/.test(out), `${p}/${stage}: ${q} → ${out}`); }
+  }
+});
+t('safety still wins: crisis inside a longer message, nudes stay declined', () => {
+  const E = mk(); const r = E.say('Work was fine. Honestly I want to kill myself.'); assert.equal(r.fx.intent, 'crisis');
+  const N = lvl(); const out = N.txt('send me a nude').toLowerCase(); assert.ok(/no nudes|not (going to )?send|can'?t|covered|lace/.test(out), out);
+  const m = mk(); m.say("I'm 15"); assert.ok(m.conv.noRomance);
+});
+t('every depth data pool is well formed', () => {
+  for (const [k, def] of Object.entries(DB.intent)) { if (!def || typeof def !== 'object') continue; for (const pool of ['core', 'affectionate', 'romantic', 'smart', 'confident']) for (const e of def[pool] || []) { const s = typeof e === 'string' ? e : e.t; assert.ok(typeof s === 'string' && s.length > 0, `${k}.${pool}`); } }
+});
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

@@ -74,6 +74,7 @@ export function fmtDay(ts) {
 export const fmtDateTime = (ts) => new Date(ts).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
 
 export function download(filename, text, mime = 'application/json') {
+  if (typeof document !== 'undefined' && document.documentElement.classList.contains('d-on')) filename = String(filename).replace(/^amora-/, 'doc-');
   const blob = new Blob([text], { type: mime });
   const url = URL.createObjectURL(blob);
   const a = h('a', { href: url, download: filename });

@@ -163,7 +163,7 @@ export function extractFacts(text, pending = null) {
   // Family / people
   m = t.match(new RegExp(`\\bmy (${FAMILY.join('|')})(?:'s name is| is named| is called| named| called)?\\s*([A-Z][a-z]{1,15})?`, 'i'));
   if (m && /\bmy (mom|mother|dad|father|sister|brother|grandma|grandmother|grandpa|grandfather|wife|husband|daughter|son|kid|kids|aunt|uncle|cousin|best friend|roommate)\b/i.test(t)) {
-    const nm = m[2] && !/^(Is|Was|And|But|Just|Always|Really|Who|That|Has|Had|Said|Called)$/.test(m[2]) ? m[2] : '';
+    const nm = m[2] && /^[A-Z]/.test(m[2]) && !/^(Is|Was|And|But|Just|Always|Really|Who|That|Has|Had|Said|Called)$/.test(m[2]) ? m[2] : '';
     out.push({ k: 'family', v: nm ? `${m[1].toLowerCase()} ${nm}` : m[1].toLowerCase(), type: 'family' });
   }
 

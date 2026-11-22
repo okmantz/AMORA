@@ -1,5 +1,6 @@
 // AMORA — intent recognition table. Each intent: id, priority (pr), regex patterns tested on the lower-cased text.
 // Optional: emo (emotional → no sarcasm/jokes), expr (avatar expression), aff/fam (relationship points), combo (may be appended to another intent).
+import { DEPTH_INTENTS } from './depth-intents.js';
 // To add an intent: add an entry here, then add a matching key in data/dialogue.js → DB.
 
 const W = (s) => new RegExp(s, 'i');
@@ -131,6 +132,7 @@ export const INTENTS = [
   { id: 'tool_days', pr: 12, expr: 'think', pats: [W("\\bhow many days\\b.*\\b(until|till|to|since|before|between)\\b"), W("\\b(countdown|days) (to|until|till)\\b"), W("\\bwhat day (of the week )?(is|was|will)\\b.*\\b(\\d|january|february|march|april|may|june|july|august|september|october|november|december|christmas|halloween|new year)"), W("\\bhow long (until|till|since)\\b")] },
   { id: 'lookup_q', pr: 6, expr: 'think', pats: [W("^(what|who) (is|are|was|were) (an? |the )?(?!you\\b|your\\b|up\\b|that\\b|this\\b|it\\b|going\\b|wrong\\b|happening\\b|new\\b|the matter\\b|my\\b|our\\b|he\\b|she\\b|they\\b|there\\b|everyone\\b|the time\\b|time\\b|today\\b|the date\\b|your name\\b|better\\b)[a-z][\\w' -]{2,40}\\??$"), W("\\b(capital of|currency of|population of|largest (country|ocean|planet)|biggest (country|ocean|planet)|tallest mountain|longest river|how many (planets|continents|oceans)|boiling point|freezing point|speed of light|chemical (symbol|formula)|why is the sky|who (painted|wrote|invented|discovered|created) the)\\b"), W("^how (does|do|did) .{3,40} work\\??$"), W("^(look up|google|search for|search|wiki|wikipedia|find out about|find info on)\\s+.{2,}"), W("^(define|definition of|meaning of|what does .{2,} mean|what is the meaning of)\\b.{0,}")] },
   { id: 'knowledge_q', pr: 5, expr: 'think', pats: [W("^(what|who|when|where|how|why)('?s| is| are| was| were| does| do| did| can| many| much| old| far| long| big| tall| fast)\\b.{4,}\\?$"), W("^(explain|define|describe|tell me about|teach me|what do you know about)\\b.{3,}")] },
+  ...DEPTH_INTENTS,
 ];
 
 /** Score every intent against the analysed text; returns sorted [{id, score, meta, m}] */

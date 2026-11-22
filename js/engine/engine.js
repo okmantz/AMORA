@@ -13,14 +13,18 @@ import { applyStyle, emojiFor, stripEmoji, addNickname } from './style.js';
 import { learn, summarize, addMention, upcomingDates } from './memory.js';
 import { triggerMatches, conditionsMet, markRule } from './rules.js';
 import { effectiveStage, MODES, STATUS_LABEL, STAGES } from './relationship.js';
+import { DEPTH_DB } from '../data/depth.js';
+import { DEPTH_INTENTS, DEPTH_IDS } from './depth-intents.js';
+import { depthIntent, depthFallback, depthPending } from './depth.js';
 import { SPICE_IDS, TOOL_IDS, DEFS as EXTRA_DEFS, spiceIntent, toolIntent, heatExtra, lookupPieces, photoPieces } from './spice.js';
 
 // merge the extra intent databases (flirting, photos, range) into DB.intent once
 for (const [k, v] of Object.entries(EXTRA_DEFS)) if (!DB.intent[k]) DB.intent[k] = v;
+for (const [k, v] of Object.entries(DEPTH_DB)) if (!DB.intent[k]) DB.intent[k] = v;
 
 const STYLE_POOLS = { spicy: 'spice', dominant: 'dominance', mischievous: 'mischief', playful: 'playfulness', sarcastic: 'sarcasm', shy: 'shyness', romantic: 'romance', confident: 'confidence', affectionate: 'affection', humor: 'humor', smart: 'intelligence', expressive: 'expressiveness' };
 const NO_EMO = new Set(['playful', 'sarcastic', 'humor', 'expressive', 'spicy', 'dominant', 'mischievous']);
-const INFO = new Set(['tool_calc', 'tool_convert', 'tool_roll', 'tool_days', 'lookup_q', 'story_request', 'poem_request', 'recall_all', 'recall_name', 'time_date', 'identity_ai', 'limits', 'knowledge_q', 'forget_cmd', 'remember_cmd', 'weather']);
+const INFO = new Set(['riddle', 'recommend', 'recipe_q', 'gift_ideas', 'outfit_help', 'travel_recs', 'workout_plan', 'calm_exercise', 'concept_q', 'hypothetical', 'likes_q', 'choice_q', 'fav_any', 'zodiac', 'fortune', 'draft_message', 'translate_phrase', 'speak_language_q', 'greet_lang', 'more_please', 'really_q', 'fun_fact', 'affirmation', 'tool_calc', 'tool_convert', 'tool_roll', 'tool_days', 'lookup_q', 'story_request', 'poem_request', 'recall_all', 'recall_name', 'time_date', 'identity_ai', 'limits', 'knowledge_q', 'forget_cmd', 'remember_cmd', 'weather']);
 const REACT_GROUP = { compliment: 'compliment', tease: 'teasing', love_you: 'affection', hug: 'affection', kiss: 'affection', miss_you: 'affection', disagree: 'disagreement', opinion: 'question', her_story: 'question' };
 const ROMANCE_STAGE = [0.05, 0.3, 0.6, 1, 1.2, 1.3];
 const FLIRTY_OK = new Set(['greeting', 'how_are_you', 'whats_up', 'compliment', 'thanks', 'miss_you', 'hug', 'goodnight', 'goodmorning', 'farewell', 'laugh', 'share_day', 'excited', 'her_looks', 'date_invite', 'love_you', 'ok_filler', 'compliment_user']);
@@ -158,6 +162,7 @@ export class Engine {
 
     // 1. safety: crisis and minors are handled before anything else and cannot be overridden by custom rules
     const hits = matchIntents(a);
+    this.mergeSentenceHits(hits, a);
     dbg.hits = hits.slice(0, 4).map((h) => ({ id: h.id, score: Math.round(h.score) }));
     if (hits[0]?.id === 'crisis') {
       conv.pending = null; conv.scenario = null; fx.intent = 'crisis'; fx.expression = 'caring'; fx.noPoints = true;
@@ -276,6 +281,7 @@ export class Engine {
       pieces.push(...r.pieces);
       followSources = r.follow || [];
       hasCore = r.pieces.some((x) => x.p >= P.core);
+      if (hasCore && !DEPTH_IDS.has(primary.id)) conv.last2 = { id: primary.id, l: a.l };
       if (r.expr) expr = r.expr;
       if (second && !['greeting', 'laugh'].includes(second.id)) {
         const s = this.say(DB.intent[second.id], X, second.id, { emo });
@@ -283,6 +289,14 @@ export class Engine {
       }
       fx.aff += primary.meta.aff || 0; fx.fam += primary.meta.fam || 0;
     }
+
+    // 7b. speech-act layer: statements about other people, plans, decisions, how-tos, opinions… (before topics, so they get a real answer)
+    let dfRes = null;
+    if (!hasCore && !emo && !pend) {
+      dfRes = depthFallback(this, a, X, fx);
+      if (dfRes && !dfRes.weak) { pieces.push(...dfRes.pieces); followSources = dfRes.follow || []; expr = expr || dfRes.expr; hasCore = true; }
+    }
+    conv.prevL = a.l;
 
     // 8. topics: either the main answer (no strong intent) or an enrichment
     const weakIntent = !primary || (primary.meta.pr <= 7 && !TOOL_IDS.has(primary.id)) || ['knowledge_q', 'opinion', 'share_day'].includes(primary?.id);
@@ -304,6 +318,10 @@ export class Engine {
       hasCore = true;
       followSources = SYS.getToKnow.map((q) => ({ e: { t: q.q }, w: 1, p: q.p }));
       forceFollow = true;
+    }
+    if (!hasCore && !emo) {
+      const df = dfRes;
+      if (df) { pieces.push(...df.pieces); followSources = followSources.length ? followSources : df.follow; expr = expr || df.expr; hasCore = true; }
     }
     if (!hasCore) {
       const fb = this.fallbackPieces(a, X);
@@ -339,12 +357,28 @@ export class Engine {
     return finish(pieces, { emo, expr: fx.expression, info: INFO.has(primary?.id) || quiet });
   }
 
+  /** Multi-sentence messages: score each sentence on its own and fold in anything the whole-text pass missed. */
+  mergeSentenceHits(hits, a) {
+    if (a.len < 7) return;
+    const parts = a.raw.split(/(?<=[.!?])\s+|\n+/).map((x) => x.trim()).filter((x) => x.split(/\s+/).length >= 2);
+    if (parts.length < 2 || parts.length > 6) return;
+    for (const part of parts) {
+      for (const h of matchIntents(analyze(part))) {
+        const ex = hits.find((x) => x.id === h.id);
+        if (ex) { if (h.score > ex.score) ex.score = h.score; continue; }
+        if (h.meta.pr >= 9 || h.id === 'crisis') hits.push({ ...h, score: h.score * 0.96 });
+      }
+    }
+    hits.sort((x, y) => y.score - x.score);
+  }
+
   /* --------------------------- intent bodies --------------------------- */
   intentPieces(hit, a, X, emo, fx, topicHits) {
     const id = hit.id, rng = X.rng, def = DB.intent[id], conv = X.conv, mem = X.mem;
     const pieces = [];
     const core = (t, extra = {}) => pieces.push({ k: 'core', t, p: P.core, ...extra });
     let follow = [], expr = null;
+    if (DEPTH_IDS.has(id)) { const prior = conv.last2; const r = depthIntent(this, id, a, X, fx); if (!['more_please', 'really_q'].includes(id)) conv.last2 = { id, l: a.l }; if (r) { return { pieces: r.pieces, follow: r.follow || [], expr: r.expr || null }; } }
     if (SPICE_IDS.has(id)) { const r = spiceIntent(this, id, a, X, fx); if (r) return { pieces: r.pieces, follow: r.follow || [], expr: r.expr || null }; }
     if (TOOL_IDS.has(id)) { const r = toolIntent(this, id, a, X, fx); if (r) return { pieces: r.pieces, follow: r.follow || [], expr: r.expr || null }; return { pieces: [{ k: 'core', t: pickOne(["Hmm, I couldn't quite parse that — try writing it like “15% of 80” or “5 miles to km”.", "I didn't catch the numbers in that — could you phrase it a little differently?"], rng), p: P.core }], follow: [], expr: 'think' }; }
     const askOf = () => (def?.ask || []).map((e) => ({ e: { t: e.q, ...(e.min ? { min: e.min } : {}) }, w: 1, p: e.p }));
@@ -671,6 +705,7 @@ export class Engine {
     const { rng, conv } = X;
     const T = p.type || '';
     const [kind, arg] = T.split(':');
+    { const dp = depthPending(this, p, a, X, fx); if (dp) { if (dp.done) X.conv.pending = null; return dp; } }
     const pc = (t, extra = {}) => ({ k: 'core', t, p: P.core, ...extra });
     const S = SYS.pending;
     const pickAck = (arr, extra) => choose(asCands(arr), X, extra)?.text || arr[0];
@@ -894,7 +929,7 @@ export class Engine {
     const emoji = meta.noEmoji ? '' : emojiFor(expr, X, opts);
     if (emoji && !/\p{Extended_Pictographic}/u.test(bubbles[bubbles.length - 1])) bubbles[bubbles.length - 1] = bubbles[bubbles.length - 1].replace(/\s*$/, ' ') + emoji;
     bubbles = bubbles.map((b) => { let n = 0; return b.replace(/\s?\p{Extended_Pictographic}\uFE0F?/gu, (m) => (++n > 2 ? '' : m)); });
-    if (persona.style.emoji === 0 || meta.noEmoji) bubbles = bubbles.map(stripEmoji);
+    if (persona.style.emoji === 0 || meta.noEmoji || (settings.discreet?.enabled && settings.discreet?.plainText)) bubbles = bubbles.map(stripEmoji);
 
     const speed = settings.chat?.typingSpeed ?? 50;
     const messages = bubbles.filter(Boolean).map((t, i) => ({

@@ -1,6 +1,7 @@
 // AMORA — sign in / create account screen.
 import { h, $ } from '../core/util.js';
 import { Auth } from '../core/auth.js';
+import { Discreet } from '../core/discreet.js';
 
 /** Resolves to { created: boolean } once the user is signed in. */
 export function authScreen() {
@@ -30,7 +31,7 @@ export function authScreen() {
         h('div', { class: 'row between' }, showPw, mode === 'login' && h('label', { class: 'check' }, keep, h('span', 'Keep me signed in'))),
         mode === 'register' && h('label', { class: 'check' }, keep, h('span', 'Keep me signed in on this device')),
         mode === 'register' && legacy && h('label', { class: 'check' }, adopt, h('span', 'Move the companion & chats already saved in this browser into my account')),
-        mode === 'register' && h('label', { class: 'check' }, adult, h('span', 'I am 18 or older. AMORA is for adults only.')),
+        mode === 'register' && h('label', { class: 'check' }, adult, h('span', Discreet.on() ? 'I am 18 or older.' : 'I am 18 or older. AMORA is for adults only.')),
         err, go,
         h('p', { class: 'muted small' }, mode === 'register'
           ? 'Accounts live on this device. Your data is saved under your account here, and you can move it to another device with a backup file. Your password is hashed — we can’t recover it, so keep it safe.'
@@ -49,7 +50,7 @@ export function authScreen() {
         } catch (ex) { err.textContent = ex.message || String(ex); go.disabled = false; go.textContent = mode === 'login' ? 'Sign in' : 'Create my account'; (mode === 'login' ? pass : /password|match/i.test(err.textContent) ? pass : user).focus(); }
       });
       root.append(h('div', { class: 'auth-card' },
-        h('div', { class: 'logo' }, 'AMORA'),
+        h('div', { class: 'logo' }, Discreet.brand()),
         h('p', { class: 'muted', style: { margin: '0 0 14px' } }, mode === 'login' ? 'Welcome back.' : 'Create your private account.'),
         h('div', { class: 'tabs auth-tabs', role: 'tablist' },
           h('button', { type: 'button', role: 'tab', class: mode === 'login' ? 'on' : '', onclick: () => { mode = 'login'; draw(); } }, 'Sign in'),

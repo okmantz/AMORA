@@ -1,5 +1,5 @@
 // AMORA service worker — precaches the app shell so it works fully offline.
-const VERSION = 'amora-v3.0.0';
+const VERSION = 'amora-v3.1.0';
 const SHELL = [
   './',
   'index.html',
@@ -9,10 +9,15 @@ const SHELL = [
   'icons/icon-512.png',
   'icons/maskable-512.png',
   'icons/apple-touch-icon.png',
+  'icons/disguise/notes-180.png', 'icons/disguise/calc-180.png', 'icons/disguise/tasks-180.png', 'icons/disguise/reader-180.png',
+  'icons/disguise/notes.webmanifest', 'icons/disguise/calc.webmanifest', 'icons/disguise/tasks.webmanifest', 'icons/disguise/reader.webmanifest',
+  'icons/disguise/notes-192.png', 'icons/disguise/calc-192.png', 'icons/disguise/tasks-192.png', 'icons/disguise/reader-192.png',
+  'icons/disguise/notes-512.png', 'icons/disguise/calc-512.png', 'icons/disguise/tasks-512.png', 'icons/disguise/reader-512.png',
   'css/styles.css',
   'assets/portraits/manifest.json',
   'js/app.js',
   'js/core/auth.js',
+  'js/core/discreet.js',
   'js/core/io.js',
   'js/core/lookup.js',
   'js/core/store.js',
@@ -22,6 +27,9 @@ const SHELL = [
   'js/data/presets.js',
   'js/data/range.js',
   'js/data/spice.js',
+  'js/data/depth.js',
+  'js/data/knowhow.js',
+  'js/data/wisdom.js',
   'js/data/system-data.js',
   'js/data/topics-data.js',
   'js/data/topics-extra.js',
@@ -31,6 +39,8 @@ const SHELL = [
   'js/engine/relationship.js',
   'js/engine/rules.js',
   'js/engine/spice.js',
+  'js/engine/depth.js',
+  'js/engine/depth-intents.js',
   'js/engine/style.js',
   'js/engine/templates.js',
   'js/engine/text.js',

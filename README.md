@@ -123,3 +123,13 @@ All data stays in your browser (`localStorage`, keys prefixed `amora.v1.`, with 
 ## License
 
 MIT.
+
+## Discreet mode (v3.1)
+
+Settings → **Discretion** makes the whole app look like something else: a notes app, calculator, checklist or reader. It swaps the tab title, favicon and manifest icon, uses a plain gray look with neutral labels and initials instead of the avatar, strips emoji, veils photos ("Attachment · tap to view"), blurs the screen when you switch tabs or go idle, and can put a working decoy screen on top (5 taps or a PIN to get back in). Esc twice, or the eye-off button in the chat header, hides everything instantly.
+
+Honest limits: the PIN only gates the screen (it is a salted hash, not encryption), data stays in your browser's local storage, and an app already installed to a home screen keeps the name and icon it had at install time — re-install after turning discreet mode on.
+
+## Depth layer (v3.1)
+
+`js/engine/depth*.js` and `js/data/{depth,knowhow,wisdom}.js` add ~60 intents (harder feelings, good news, questions about her, relationship talk, romance scenes) and a set of practical handlers (recommendations, recipes, advice playbooks, gifts, outfits, travel, workouts, calming exercises, big-concept answers, hypotheticals, riddles, a small phrasebook, astrology and fortunes for play, favourites, "X or Y?", message drafts). A speech-act fallback answers statements about other people, plans, decisions, how-tos, why-questions and opinions even when no specific rule matches. It is still fully offline and rule-based; she says so when something is beyond her. Content stays suggestive, never graphic, and photos never show nudity.
