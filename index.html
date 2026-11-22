@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>AMORA — Customizable Virtual Companion</title>
+  <meta name="description" content="AMORA is a customizable virtual companion that runs entirely in your browser. Rule-based, private, no AI and no accounts.">
+  <meta name="theme-color" content="#fbf5f3">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="AMORA">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div id="splash" aria-hidden="true"><div class="logo">AMORA</div></div>
+  <div id="app"></div>
+  <div id="modal-root"></div>
+  <div id="toast-root" aria-live="polite"></div>
+  <noscript><p style="padding:24px;font-family:sans-serif">AMORA needs JavaScript. It runs entirely in your browser — no server, no AI.</p></noscript>
+  <script type="module">
+    import { boot } from './js/app.js';
+    boot();
+  </script>
+</body>
+</html>
