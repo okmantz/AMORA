@@ -275,3 +275,38 @@ details.card > summary { cursor: pointer; list-style: none; } details.card[open]
 .photo-lightbox { width: min(360px, 78vw); aspect-ratio: 3 / 4; margin: 0 auto; border-radius: 18px; overflow: hidden; box-shadow: var(--shadow-md, 0 8px 24px rgba(0,0,0,.25)); }
 .bubble .src { display: block; margin-top: 6px; font-size: .72rem; opacity: .7; text-decoration: underline; }
 .pop-item.locked { opacity: .55; }
+
+/* ---------- photoreal avatar & photos ---------- */
+.avatar.photo { border-radius: 50%; background: var(--surface-2); box-shadow: 0 0 0 2px rgba(255, 255, 255, .85), 0 6px 20px rgba(var(--accent-rgb), .3); transition: box-shadow .5s, transform .5s; }
+.avatar.photo.big { border-radius: 26%; box-shadow: 0 0 0 3px rgba(255, 255, 255, .9), var(--shadow); }
+.avatar .av-photo { transition: transform .8s ease, filter .6s ease; transform-origin: 50% 30%; }
+/* Expressions can't change a photograph, so they tint the glow and add a gentle motion instead. */
+.avatar.photo[data-expr="love"], .avatar.photo[data-expr="kiss"] { box-shadow: 0 0 0 2px rgba(255, 255, 255, .9), 0 0 26px rgba(233, 90, 140, .65); }
+.avatar.photo[data-expr="blush"], .avatar.photo[data-expr="wink"], .avatar.photo[data-expr="sultry"] { box-shadow: 0 0 0 2px rgba(255, 255, 255, .9), 0 0 22px rgba(240, 140, 120, .55); }
+.avatar.photo[data-expr="happy"], .avatar.photo[data-expr="laugh"] { box-shadow: 0 0 0 2px rgba(255, 255, 255, .9), 0 0 20px rgba(255, 200, 110, .5); }
+.avatar.photo[data-expr="caring"] { box-shadow: 0 0 0 2px rgba(255, 255, 255, .9), 0 0 20px rgba(150, 190, 240, .5); }
+.avatar.photo[data-expr="laugh"] .av-photo { animation: avBounce .7s ease 2; }
+.avatar.photo[data-expr="surprised"] .av-photo, .avatar.photo[data-expr="love"] .av-photo { transform: scale(1.06); }
+.avatar.photo[data-expr="think"] .av-photo { filter: saturate(.9) brightness(.97); }
+.avatar.photo[data-expr="sultry"] .av-photo { filter: contrast(1.04) saturate(1.06); }
+@keyframes avBounce { 50% { transform: scale(1.05) translateY(-1.5%); } }
+.reduce-motion .avatar.photo .av-photo { animation: none; transform: none; transition: none; }
+
+.photo-card .photo-img, .photo-lightbox .photo-img { width: 100%; height: 100%; display: block; object-fit: cover; background: var(--surface-2); }
+.photo-lightbox.real { width: min(360px, 78vw); aspect-ratio: auto; max-height: 72vh; background: #111; }
+.photo-lightbox.real .photo-img { max-height: 72vh; object-fit: contain; }
+
+/* portrait gallery (Her → Look) */
+.pgal-bar { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.pgal { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px; max-height: 520px; overflow-y: auto; padding: 4px 2px 8px; }
+.pthumb { position: relative; padding: 0; border: 2px solid transparent; border-radius: 16px; overflow: hidden; background: var(--surface-2); aspect-ratio: 4 / 5; cursor: pointer; transition: transform .2s, border-color .2s, box-shadow .2s; }
+.pthumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pthumb:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0, 0, 0, .18); }
+.pthumb.on { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), .25); }
+.pthumb.auto::after { content: 'Matched'; position: absolute; left: 6px; bottom: 6px; font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: rgba(var(--accent-rgb), .92); color: #fff; padding: 2px 7px; border-radius: 99px; }
+.pthumb.on:not(.auto)::after { content: 'Pinned'; position: absolute; left: 6px; bottom: 6px; font-size: .62rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; background: var(--accent); color: #fff; padding: 2px 7px; border-radius: 99px; }
+.photo-note { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 14px; background: rgba(var(--accent-rgb), .08); font-size: .84rem; margin: 0 0 12px; }
+.photo-img.tight { object-fit: cover; transform: scale(1.5); transform-origin: 50% 12%; }
+.photo-lightbox.real.tight { aspect-ratio: 3 / 4; overflow: hidden; }
+.photo-lightbox.real.tight .photo-img { max-height: none; }
+.photo-card.wide { width: min(320px, 76vw); }
