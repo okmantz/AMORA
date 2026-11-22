@@ -48,7 +48,7 @@ export const TOPIC_CHOICES = ['work', 'school', 'hobbies', 'philosophy', 'histor
 export function blankPersona() {
   return {
     id: uid('p'), name: 'Amora', age: 25, bio: '',
-    look: { skin: '#f6d0b8', hairStyle: 'long', hairColor: '#4a2c20', eyeColor: '#7a5230', outfit: 'sweater', outfitColor: '#c2577a', accessory: 'none', aesthetic: 'romantic', bodyType: 'average', makeup: 'glam', lip: '#c0506b', freckles: false, beautyMark: false, avatarKind: 'illustrated', avatarImage: null },
+    look: { skin: '#f6d0b8', hairStyle: 'long', hairColor: '#4a2c20', eyeColor: '#7a5230', outfit: 'sweater', outfitColor: '#c2577a', accessory: 'none', aesthetic: 'romantic', bodyType: 'average', makeup: 'glam', lip: '#c0506b', freckles: false, beautyMark: false, avatarKind: 'photo', avatarImage: null, portraitId: null },
     traits: { affection: 70, humor: 55, sarcasm: 25, intelligence: 65, playfulness: 55, romance: 60, confidence: 55, shyness: 35, expressiveness: 70, curiosity: 65, empathy: 75, spice: 45, dominance: 30, mischief: 45 },
     interests: { hobbies: ['reading', 'baking'], music: ['dream pop', 'jazz'], movies: ['romantic comedies'], books: ['poetry'], activities: ['evening walks'], foods: ['pasta', 'chocolate'] },
     topics: { preferred: [], prohibited: [], prohibitedWords: [] },
