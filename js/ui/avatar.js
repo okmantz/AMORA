@@ -1,6 +1,10 @@
-// AMORA — procedural SVG avatar with hairstyles, outfits, accessories and expressions. No image assets needed.
+// AMORA — avatar rendering. Default is a real photograph matched to her look (see photoreal.js); the drawn SVG
+// portrait is only a fallback if the photo library cannot be loaded.
 import { h } from '../core/util.js';
 import { portraitSVG, shade as _shade, EXPRESSIONS as _EX } from './portrait.js';
+import { pickPortrait, portraitsReady, portraitSrc, portraitFocus } from './photoreal.js';
+
+const esc = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 const BG = {
   romantic: ['#fbe0ea', '#e9a6c4'], cozy: ['#f8e6cf', '#e6b98a'], elegant: ['#ece2f2', '#b9a0cf'], sporty: ['#d9eef8', '#8ec5e6'],
@@ -28,7 +32,15 @@ export function avatarEl(persona, expr = 'neutral', { size = 48, cls = '' } = {}
 export function paintAvatar(el, persona, expr = 'neutral') {
   const L = persona.look;
   el.dataset.expr = expr;
-  if (L.avatarKind === 'image' && L.avatarImage) el.innerHTML = `<img src="${L.avatarImage}" alt="${persona.name}" class="av-img">`;
-  else if (L.avatarKind === 'monogram') el.innerHTML = monogramHTML(persona.name, L);
-  else el.innerHTML = avatarSVG(L, expr, 'g' + (counter++));
+  const kind = L.avatarKind === 'illustrated' ? 'photo' : L.avatarKind; // older saves used the drawn avatar
+  if (kind === 'image' && L.avatarImage) { el.classList.remove('photo'); el.innerHTML = `<img src="${esc(L.avatarImage)}" alt="${esc(persona.name)}" class="av-img">`; return; }
+  if (kind === 'monogram') { el.classList.remove('photo'); el.innerHTML = monogramHTML(persona.name, L); return; }
+  const p = portraitsReady() ? pickPortrait(persona) : null;
+  if (p) {
+    el.classList.add('photo');
+    el.innerHTML = `<img class="av-img av-photo" src="${portraitSrc(p)}" alt="${esc(persona.name)}" style="object-position:${portraitFocus(p)}" decoding="async">`;
+  } else {
+    el.classList.remove('photo');
+    el.innerHTML = avatarSVG(L, expr, 'g' + (counter++));
+  }
 }

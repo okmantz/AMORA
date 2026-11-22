@@ -2,7 +2,8 @@
 import { h, uid, fmtTime, fmtDay, dayKey, download, clamp } from '../core/util.js';
 import { icon, toast, modal, confirmBox as cb, promptBox } from './dom.js';
 import { avatarEl, paintAvatar } from './avatar.js';
-import { portraitSVG } from './portrait.js';
+import { portraitSVG, OUTFIT_LEVEL } from './portrait.js';
+import { pickPortrait, portraitsReady, portraitSrc, portraitFocus, allowedAtTier } from './photoreal.js';
 import { MODES, STAGES, stageProgress, effectiveStage, unlocked } from '../engine/relationship.js';
 import { SYS } from '../data/system-data.js';
 
@@ -38,10 +39,24 @@ function fmt(text, html) {
   return frag;
 }
 
-/** Render a stored photo recipe as an SVG string using her current look. */
-export function photoSVG(persona, ph, uid) {
+/** Which real photograph she sends. She is one woman, so every photo is her matched portrait; when the content level is lower
+ *  than the frame shows, the photo is cropped in to her face and shoulders instead of swapping in a different person. */
+export function photoFor(persona, ph) {
+  const L = persona.look || {};
+  if ((L.avatarKind === 'image') && L.avatarImage) return { src: L.avatarImage, ratio: null, focus: '50% 25%', tight: false };
+  if (!portraitsReady() || L.avatarKind === 'monogram') return null;
+  const tier = ph.tier ?? (OUTFIT_LEVEL[ph.outfit] ?? 0);
+  const p = pickPortrait(persona);
+  return p ? { src: portraitSrc(p), ratio: p.w / p.h, focus: portraitFocus(p), tight: !allowedAtTier(p, tier) } : null;
+}
+const escA = (t) => String(t ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+/** Markup for a photo: a real image when the portrait library is available, otherwise the drawn fallback. */
+export function photoMarkup(persona, ph, uid, { full = false } = {}) {
+  const f = photoFor(persona, ph);
+  if (f) return `<img class="photo-img${f.tight ? ' tight' : ''}" src="${escA(f.src)}" alt="${escA(persona.name)}" style="object-position:${f.focus};${full && !f.tight ? 'object-fit:contain' : ''}" decoding="async">`;
   return portraitSVG(persona.look, ph.expr || 'happy', { uid, crop: 'full', scene: ph.scene, outfit: ph.outfit, pose: ph.pose });
 }
+export const photoSVG = (persona, ph, uid) => photoMarkup(persona, ph, uid);
 /** Convert an SVG string to a PNG blob (for saving). */
 export function svgToPng(svg, w = 900, h = 1200) {
   return new Promise((res, rej) => {
@@ -52,11 +67,19 @@ export function svgToPng(svg, w = 900, h = 1200) {
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(src);
   });
 }
+async function savePhoto(persona, ph, uid) {
+  const f = photoFor(persona, ph);
+  let blob, ext = 'png';
+  if (f) { const r = await fetch(f.src); blob = await r.blob(); ext = (blob.type.split('/')[1] || 'jpg').replace('jpeg', 'jpg'); }
+  else blob = await svgToPng(portraitSVG(persona.look, ph.expr || 'happy', { uid: uid + 'S', crop: 'full', scene: ph.scene, outfit: ph.outfit, pose: ph.pose }));
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${persona.name.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.${ext}`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
 export function openPhoto(persona, ph, uid) {
-  const svg = photoSVG(persona, ph, uid + 'L');
-  const wrap = h('div', { class: 'photo-lightbox' }); wrap.innerHTML = svg;
+  const f = photoFor(persona, ph);
+  const wrap = h('div', { class: `photo-lightbox${f ? ' real' : ''}${f && f.tight ? ' tight' : ''}`, style: f && f.ratio && !f.tight ? { aspectRatio: String(f.ratio) } : {} });
+  wrap.innerHTML = photoMarkup(persona, ph, uid + 'L', { full: true });
   modal({ title: '', body: wrap, size: 'sm', actions: [
-    { label: 'Save image', onClick: async () => { try { const b = await svgToPng(photoSVG(persona, ph, uid + 'S')); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `${persona.name.toLowerCase()}-${new Date().toISOString().slice(0, 10)}.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); toast('Saved'); } catch (e) { toast(e.message, 'err'); } return false; } },
+    { label: 'Save image', onClick: async () => { try { await savePhoto(persona, ph, uid); toast('Saved'); } catch (e) { toast(e.message, 'err'); } return false; } },
     { label: 'Close', kind: 'primary' }] });
 }
 
@@ -174,8 +197,9 @@ export function render(A) {
   function scrollEnd(smooth = true) { requestAnimationFrame(() => msgsEl.scrollTo({ top: msgsEl.scrollHeight, behavior: smooth ? 'smooth' : 'auto' })); }
 
   function photoBubble(m) {
-    const box = h('button', { type: 'button', class: `photo-card tier${m.photo.tier || 0}`, 'aria-label': 'Open photo', onclick: () => openPhoto(persona(), m.photo, m.id) });
-    box.innerHTML = photoSVG(persona(), m.photo, 'p' + m.id);
+    const f = photoFor(persona(), m.photo);
+    const box = h('button', { type: 'button', class: `photo-card tier${m.photo.tier || 0}${f && f.ratio > 1.15 && !f.tight ? ' wide' : ''}`, style: f && f.ratio > 1.15 && !f.tight ? { aspectRatio: String(f.ratio) } : {}, 'aria-label': 'Open photo', onclick: () => openPhoto(persona(), m.photo, m.id) });
+    box.innerHTML = photoMarkup(persona(), m.photo, 'p' + m.id);
     return box;
   }
   function addMessage(m, fromHer) {

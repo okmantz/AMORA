@@ -5,6 +5,7 @@ import { avatarEl, paintAvatar, EXPRESSIONS } from './avatar.js';
 import { fText, fSelect, fToggle, fSlider, fChips, fTags, fSwatches, section, tabs, toast, confirmBox, modal, icon } from './dom.js';
 import { exportPersona, parseFile, personaFromExport } from '../core/io.js';
 import { STAGES, STATUS_LABEL } from '../engine/relationship.js';
+import { portraitsReady, portraitList, portraitSrc, portraitFocus, rankPortraits, pickPortrait, skinIndex, ageBand, bandAge, AGE_BANDS } from './photoreal.js';
 
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
 const SAMPLES = ['Hi, how was your day?', "You're beautiful", "I'm so stressed today", 'Tell me about yourself', "Let's talk about music", 'I love you', "I'm bored"];
@@ -40,34 +41,82 @@ export function render(A) {
   }
 
   /* ----------------------------- Look ----------------------------- */
+  const galState = A._gal || (A._gal = { skin: null, body: null, age: null });
   function look() {
     const p = persona(), L = p.look;
+    if (L.avatarKind === 'illustrated') L.avatarKind = 'photo';
+    const unpin = (fn) => (v) => { fn(v); L.portraitId = null; commit(); paintGallery(); };
     const photo = h('div', { class: 'row wrap' },
-      h('button', { class: 'btn', onclick: async () => { const f = await pickFile('image/*'); if (!f) return; try { L.avatarImage = await resizeImage(f, 320, 0.85); L.avatarKind = 'image'; commit(); paint(); toast('Avatar updated'); } catch (e) { toast(e.message, 'err'); } } }, icon('upload', 16), 'Upload image'),
-      L.avatarImage && h('button', { class: 'btn ghost', onclick: () => { L.avatarImage = null; if (L.avatarKind === 'image') L.avatarKind = 'illustrated'; commit(); paint(); } }, 'Remove image'));
+      h('button', { class: 'btn', onclick: async () => { const f = await pickFile('image/*'); if (!f) return; try { L.avatarImage = await resizeImage(f, 900, 0.88); L.avatarKind = 'image'; commit(); paint(); toast('Photo updated'); } catch (e) { toast(e.message, 'err'); } } }, icon('upload', 16), 'Upload your own photo'),
+      L.avatarImage && h('button', { class: 'btn ghost', onclick: () => { L.avatarImage = null; if (L.avatarKind === 'image') L.avatarKind = 'photo'; commit(); paint(); } }, 'Remove photo'));
+
+    /* --- portrait gallery --- */
+    const galWrap = h('div');
+    function paintGallery() {
+      galWrap.innerHTML = '';
+      if (!portraitsReady()) { galWrap.append(h('p', { class: 'muted' }, 'The portrait library could not be loaded. Make sure the assets/portraits folder is uploaded next to index.html.')); return; }
+      const pinned = L.portraitId && portraitList().find((x) => x.id === L.portraitId);
+      const current = pickPortrait(p);
+      const chipRow = (key, opts, label) => h('div', { class: 'pgal-bar', role: 'group', 'aria-label': label }, h('button', { class: `chip${galState[key] == null ? ' on' : ''}`, onclick: () => { galState[key] = null; paintGallery(); } }, 'Any'), opts.map(([v, l]) => h('button', { class: `chip${galState[key] === v ? ' on' : ''}`, onclick: () => { galState[key] = galState[key] === v ? null : v; paintGallery(); } }, l)));
+      const ranked = rankPortraits(p).filter((x) => (galState.skin == null || x.skin === galState.skin) && (galState.body == null || x.body === galState.body) && (galState.age == null || x.age === galState.age));
+      const grid = h('div', { class: 'pgal', role: 'listbox', 'aria-label': 'Portraits' });
+      ranked.forEach((x) => {
+        const on = current && current.id === x.id;
+        grid.append(h('button', { type: 'button', role: 'option', 'aria-selected': String(!!on), class: `pthumb${on ? ' on' : ''}${on && !pinned ? ' auto' : ''}`, title: x.label, onclick: () => pin(x) }, h('img', { src: portraitSrc(x), alt: x.label, loading: 'lazy', decoding: 'async', style: { objectPosition: portraitFocus(x) } })));
+      });
+      if (!ranked.length) grid.append(h('p', { class: 'muted' }, 'No portraits match these filters — try “Any”.'));
+      galWrap.append(
+        h('div', { class: 'photo-note' }, icon('sparkle', 16), h('span', pinned ? `Pinned portrait: ${pinned.label}. Changing the look options below goes back to auto-matching.` : 'She automatically matches the closest portrait to the look you set below. Tap any portrait to pin it.')),
+        h('div', { class: 'row wrap', style: { marginBottom: '10px' } },
+          h('button', { class: 'btn', onclick: shuffle }, icon('dice', 16), 'Shuffle similar'),
+          pinned && h('button', { class: 'btn ghost', onclick: () => { L.portraitId = null; commit(); paintGallery(); } }, 'Back to auto-match')),
+        h('span', { class: 'label' }, 'Skin tone'), chipRow('skin', OPTIONS.skin.map((s, i) => [i, s[1]]), 'Filter by skin tone'),
+        h('span', { class: 'label' }, 'Body type'), chipRow('body', OPTIONS.bodyType, 'Filter by body type'),
+        h('span', { class: 'label' }, 'Age'), chipRow('age', AGE_BANDS.map((b) => [b[0], b[1]]), 'Filter by age'),
+        grid);
+    }
+    function pin(x) {
+      L.avatarKind = 'photo'; L.portraitId = x.id;
+      Object.assign(L, { skin: OPTIONS.skin[x.skin][0], hairColor: x.hairColor, hairStyle: x.hairStyle, bodyType: x.body, freckles: !!x.freckles });
+      if (ageBand(p.age) !== x.age) { p.age = bandAge(x.age); toast(`Age set to ${p.age} to match this portrait`); }
+      commit(); paint();
+    }
+    function shuffle() {
+      const top = rankPortraits(p).slice(0, 8).filter((x) => x.id !== pickPortrait(p)?.id);
+      if (top.length) pin(top[Math.floor(Math.random() * Math.min(top.length, 6))]);
+    }
+
+    const randomize = () => {
+      const pool = portraitList();
+      if (portraitsReady()) { const x = pool[Math.floor(Math.random() * pool.length)]; Object.assign(L, { outfit: rnd(OPTIONS.outfit.filter((o) => ['tee', 'sweater', 'hoodie', 'blazer', 'sundress', 'dress', 'offshoulder', 'camisole'].includes(o[0])))[0], outfitColor: rnd(OPTIONS.outfitColors), accessory: rnd(OPTIONS.accessory)[0], aesthetic: rnd(OPTIONS.aesthetic)[0], eyeColor: rnd(OPTIONS.eyeColor)[0], makeup: rnd(OPTIONS.makeup)[0], lip: rnd(OPTIONS.lipColor) }); pin(x); }
+    };
+    paintGallery();
     return h('div',
       section('Identity',
         fText('Name', () => p.name, (v) => { p.name = v.slice(0, 30) || 'Amora'; commit(); }, { max: 30 }),
-        fText('Age (adult characters only, 18+)', () => p.age, (v) => { p.age = clamp(Math.round(+v) || 18, 18, 99); commit(); }, { type: 'number' }),
+        fText('Age (adult characters only, 18+)', () => p.age, (v) => { p.age = clamp(Math.round(+v) || 18, 18, 99); L.portraitId = null; commit(); paintGallery(); }, { type: 'number' }),
         fText('About her', () => p.bio, (v) => { p.bio = v; A.touchPersona(); }, { multiline: true, max: 400, hint: 'Shown in her profile; she uses this when you ask her to tell you about herself.' })),
-      section('Avatar',
-        fChips('Avatar type', [['illustrated', 'Illustrated'], ['monogram', 'Monogram'], ['image', 'Your own image']], () => L.avatarKind, (v) => { L.avatarKind = v; commit(); paint(); }),
-        (L.avatarKind === 'image' || true) && photo),
-      section('Appearance',
-        fSwatches('Skin tone', OPTIONS.skin, () => L.skin, (v) => { L.skin = v; commit(); }),
-        fChips('Hairstyle', OPTIONS.hairStyle, () => L.hairStyle, (v) => { L.hairStyle = v; commit(); }),
-        fSwatches('Hair color', OPTIONS.hairColor, () => L.hairColor, (v) => { L.hairColor = v; commit(); }),
+      section('Her photo',
+        fChips('Avatar type', [['photo', 'Real photo'], ['image', 'Your own photo'], ['monogram', 'Monogram']], () => (L.avatarKind === 'illustrated' ? 'photo' : L.avatarKind), (v) => { L.avatarKind = v; commit(); paint(); }),
+        galWrap,
+        photo),
+      section('Look — shapes which portrait she is',
+        fSwatches('Skin tone', OPTIONS.skin, () => L.skin, unpin((v) => { L.skin = v; })),
+        fChips('Hairstyle', OPTIONS.hairStyle, () => L.hairStyle, unpin((v) => { L.hairStyle = v; })),
+        fSwatches('Hair color', OPTIONS.hairColor, () => L.hairColor, unpin((v) => { L.hairColor = v; })),
+        fChips('Body type', OPTIONS.bodyType, () => L.bodyType || 'average', unpin((v) => { L.bodyType = v; })),
+        fToggle('Freckles', '', () => !!L.freckles, unpin((v) => { L.freckles = v; }))),
+      section('Style details — how she describes herself',
+        h('p', { class: 'muted', style: { marginTop: 0 } }, 'These don’t change the photo, but she uses them when she talks about her eyes, makeup and outfits.'),
         fSwatches('Eye color', OPTIONS.eyeColor, () => L.eyeColor, (v) => { L.eyeColor = v; commit(); }),
-        fChips('Body type', OPTIONS.bodyType, () => L.bodyType || 'average', (v) => { L.bodyType = v; commit(); }),
         fChips('Makeup', OPTIONS.makeup, () => L.makeup || 'glam', (v) => { L.makeup = v; commit(); }),
         fSwatches('Lip color', OPTIONS.lipColor, () => L.lip || '#c0506b', (v) => { L.lip = v; commit(); }),
-        fToggle('Freckles', '', () => !!L.freckles, (v) => { L.freckles = v; commit(); }),
         fToggle('Beauty mark', '', () => !!L.beautyMark, (v) => { L.beautyMark = v; commit(); }),
         fChips('Clothing', OPTIONS.outfit, () => L.outfit, (v) => { L.outfit = v; commit(); }),
         fSwatches('Clothing color', OPTIONS.outfitColors, () => L.outfitColor, (v) => { L.outfitColor = v; commit(); }),
         fChips('Accessory', OPTIONS.accessory, () => L.accessory, (v) => { L.accessory = v; commit(); }),
-        fChips('Aesthetic', OPTIONS.aesthetic, () => L.aesthetic, (v) => { L.aesthetic = v; commit(); }, 'Sets her avatar backdrop colors and how she describes her style.'),
-        h('button', { class: 'btn', onclick: () => { Object.assign(L, { skin: rnd(OPTIONS.skin)[0], hairStyle: rnd(OPTIONS.hairStyle)[0], hairColor: rnd(OPTIONS.hairColor)[0], eyeColor: rnd(OPTIONS.eyeColor)[0], outfit: rnd(OPTIONS.outfit.filter((o) => ['tee','sweater','hoodie','blazer','sundress','dress','offshoulder','camisole'].includes(o[0])))[0], bodyType: rnd(OPTIONS.bodyType)[0], makeup: rnd(OPTIONS.makeup)[0], lip: rnd(OPTIONS.lipColor), freckles: Math.random() < 0.3, outfitColor: rnd(OPTIONS.outfitColors), accessory: rnd(OPTIONS.accessory)[0], aesthetic: rnd(OPTIONS.aesthetic)[0] }); commit(); paint(); } }, icon('dice', 16), 'Randomize look')));
+        fChips('Aesthetic', OPTIONS.aesthetic, () => L.aesthetic, (v) => { L.aesthetic = v; commit(); }, 'Sets how she describes her style (and the backdrop color if you use a monogram).'),
+        h('button', { class: 'btn', onclick: randomize }, icon('dice', 16), 'Randomize look')));
   }
 
   /* -------------------------- try-it widget -------------------------- */
