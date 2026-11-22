@@ -1,4 +1,5 @@
 // AMORA — application core: state, persistence, theming, navigation and the send/reply pipeline.
+import { loadPortraits } from './ui/photoreal.js';
 import { h, $, uid, debounce, bus, dayKey, deepClone, clamp, sleep } from './core/util.js';
 import { Auth } from './core/auth.js';
 import { lookup } from './core/lookup.js';
@@ -352,6 +353,7 @@ export async function boot() {
     A.load();
     if (entry.created && !entry.adopted) { A.settings.ageConfirmed = true; const d = Auth.current.display; if (d && d !== Auth.current.username) A.settings.userName = d; A.save('settings'); }
     if (entry.created && entry.adopted) { A.settings.ageConfirmed = true; A.save('settings'); }
+    await loadPortraits(); // real-photo avatar library (falls back gracefully if missing)
     A.applyTheme();
     window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener?.('change', () => A.settings.theme === 'auto' && A.applyTheme());
     A.mountShell();
