@@ -1,0 +1,118 @@
+# Regeneration prompts
+
+Base style for every portrait: *photorealistic studio portrait of an adult woman, soft natural window light, neutral warm-gray plaster background, shallow depth of field, 85mm lens, natural skin texture and pores, head-and-shoulders framing with thin-strap top, looking at camera, ultra detailed, 4:5.*
+
+- `p001.jpg` — Black coily hair: adult woman in her mid-20s, deep skin tone, afro hair, average build.
+- `p002.jpg` — Brown afro: adult woman in her mid-20s, brown skin tone, afro hair, average build.
+- `p003.jpg` — Red loose curls: adult woman in her mid-20s, porcelain skin tone, curls hair, average build, freckles.
+- `p004.jpg` — Straight black hair with fringe: adult woman in her mid-20s, fair skin tone, straight hair, average build.
+- `p005.jpg` — Curly pixie cut: adult woman in her mid-20s, deep skin tone, pixie hair, average build.
+- `p006.jpg` — Slicked-back braids: adult woman in her mid-20s, deep skin tone, braid hair, average build.
+- `p007.jpg` — Soft updo: adult woman in her mid-20s, warm beige skin tone, bun hair, average build.
+- `p008.jpg` — Side braid: adult woman in her mid-20s, warm beige skin tone, braid hair, average build.
+- `p009.jpg` — Wavy brown hair: adult woman in her mid-20s, warm beige skin tone, wavy hair, average build.
+- `p010.jpg` — Platinum-blonde waves: adult woman in her mid-20s, porcelain skin tone, wavy hair, average build.
+- `p011.jpg` — Pale-pink long hair: adult woman in her mid-20s, fair skin tone, straight hair, average build.
+- `p012.jpg` — Lavender long hair: adult woman in her mid-20s, fair skin tone, wavy hair, average build.
+- `p013.jpg` — Short golden curls: adult woman in her mid-20s, tan skin tone, curls hair, average build.
+- `p014.jpg` — High ponytail: adult woman in her mid-20s, tan skin tone, ponytail hair, average build.
+- `p015.jpg` — Half-up platinum: adult woman in her mid-20s, porcelain skin tone, ponytail hair, average build.
+- `p016.jpg` — Short textured curls: adult woman in her mid-20s, caramel skin tone, curls hair, average build.
+- `p017.jpg` — Silver short hair: adult woman in her mid-20s, porcelain skin tone, pixie hair, average build.
+- `p018.jpg` — Blunt bob: adult woman in her mid-20s, fair skin tone, bob hair, average build.
+- `p019.jpg` — Face-framing curls: adult woman in her mid-20s, brown skin tone, curls hair, average build.
+- `p020.jpg` — Long black hair: adult woman in her mid-20s, warm beige skin tone, long hair, average build.
+- `p021.jpg` — Wispy fringe: adult woman in her mid-20s, warm beige skin tone, bob hair, average build.
+- `p022.jpg` — Curly ombre: adult woman in her mid-20s, tan skin tone, curls hair, average build.
+- `p023.jpg` — Honey waves: adult woman in her mid-20s, fair skin tone, wavy hair, average build.
+- `p024.jpg` — Voluminous afro: adult woman in her mid-20s, deep skin tone, afro hair, full-figured, plus-size build.
+- `p025.jpg` — Top knot with fringe: adult woman in her mid-20s, warm beige skin tone, bun hair, average build.
+- `p026.jpg` — Two cornrow braids: adult woman in her mid-20s, tan skin tone, boxbraids hair, average build.
+- `p027.jpg` — Long box braids: adult woman in her mid-20s, deep skin tone, boxbraids hair, average build.
+- `p028.jpg` — Microbraids: adult woman in her mid-20s, deep skin tone, boxbraids hair, average build.
+- `p029.jpg` — Short twisted locs: adult woman in her mid-20s, caramel skin tone, curls hair, average build.
+- `p030.jpg` — Bright-red long hair: adult woman in her mid-20s, warm beige skin tone, wavy hair, average build.
+- `p031.jpg` — Cherry-blonde waves: adult woman in her mid-20s, fair skin tone, wavy hair, full-figured, plus-size build.
+- `p032.jpg` — Honey-brown curls: adult woman in her mid-20s, warm beige skin tone, curls hair, average build.
+- `p033.jpg` — Natural gray hair: adult woman in her early 50s, caramel skin tone, pixie hair, average build.
+- `p034.jpg` — Sleek cropped curls: adult woman in her mid-20s, deep skin tone, pixie hair, average build.
+- `p035.jpg` — Tousled pixie: adult woman in her mid-20s, fair skin tone, pixie hair, average build.
+- `p036.jpg` — Short waves: adult woman in her mid-20s, fair skin tone, wavy hair, average build.
+- `p037.jpg` — Blue short hair: adult woman in her mid-20s, caramel skin tone, pixie hair, average build.
+- `p038.jpg` — Silver-platinum waves: adult woman in her mid-20s, tan skin tone, wavy hair, average build.
+- `p039.jpg` — Pastel-purple braid: adult woman in her mid-20s, fair skin tone, braid hair, average build.
+- `p040.jpg` — Pastel-pink waves: adult woman in her mid-20s, fair skin tone, lob hair, curvy build.
+- `p041.jpg` — Shoulder-length dark hair: adult woman in her mid-20s, tan skin tone, long hair, average build.
+- `p042.jpg` — Blunt fringe: adult woman in her mid-20s, fair skin tone, long hair, average build.
+- `p043.jpg` — Light-brown curls: adult woman in her mid-20s, fair skin tone, curls hair, average build.
+- `p044.jpg` — Honey-blonde waves: adult woman in her mid-20s, fair skin tone, wavy hair, average build.
+- `p045.jpg` — Black-and-silver bob: adult woman in her mid-20s, warm beige skin tone, bob hair, average build.
+- `p046.jpg` — Blonde with pink tips: adult woman in her mid-20s, porcelain skin tone, long hair, average build.
+- `p047.jpg` — Brown with blonde face-framing: adult woman in her mid-20s, warm beige skin tone, wavy hair, average build.
+- `p048.jpg` — Mixed-tone curls: adult woman in her mid-20s, caramel skin tone, curls hair, average build.
+- `p049.jpg` — Black waves: adult woman in her mid-20s, deep skin tone, wavy hair, average build.
+- `p050.jpg` — Black waves, curvy: adult woman in her mid-20s, caramel skin tone, wavy hair, curvy build.
+- `p051.jpg` — Dark brunette waves: adult woman in her mid-20s, tan skin tone, wavy hair, average build.
+- `p052.jpg` — Honey-blonde waves: adult woman in her mid-20s, warm beige skin tone, wavy hair, average build.
+- `p053.jpg` — Blonde waves with flower: adult woman in her mid-20s, warm beige skin tone, wavy hair, average build.
+- `p054.jpg` — Espresso waves: adult woman in her mid-20s, tan skin tone, wavy hair, average build.
+- `p055.jpg` — White-blonde: adult woman in her mid-20s, porcelain skin tone, long hair, average build.
+- `p056.jpg` — Copper waves with flower: adult woman in her mid-20s, fair skin tone, wavy hair, average build.
+- `p057.jpg` — Sun-kissed blonde: adult woman in her mid-20s, tan skin tone, wavy hair, curvy build.
+- `p058.jpg` — Caramel brunette: adult woman in her mid-20s, warm beige skin tone, wavy hair, average build.
+- `p059.jpg` — Rose-pink waves: adult woman in her mid-20s, fair skin tone, wavy hair, curvy build.
+- `p060.jpg` — Long black hair: adult woman in her mid-20s, brown skin tone, long hair, average build.
+- `p061.jpg` — Silver-white half-up: adult woman in her mid-20s, porcelain skin tone, wavy hair, average build.
+- `p062.jpg` — Chestnut waves: adult woman in her mid-20s, warm beige skin tone, wavy hair, average build.
+- `p063.jpg` — Raven waves: adult woman in her mid-20s, tan skin tone, wavy hair, curvy build.
+- `p064.jpg` — Brown waves: adult woman in her mid-20s, warm beige skin tone, wavy hair, average build.
+- `p065.jpg` — Dark curls: adult woman in her mid-20s, tan skin tone, curls hair, average build.
+- `p066.jpg` — Long straight blonde: adult woman in her mid-20s, fair skin tone, long hair, average build.
+- `p067.jpg` — Platinum high ponytail: adult woman in her mid-20s, porcelain skin tone, ponytail hair, curvy build.
+- `p068.jpg` — Blonde half-braid: adult woman in her mid-20s, fair skin tone, long hair, curvy build.
+- `p069.jpg` — Golden waves: adult woman in her mid-20s, fair skin tone, wavy hair, average build.
+- `p070.jpg` — Black waves: adult woman in her mid-20s, caramel skin tone, wavy hair, average build.
+- `p071.jpg` — Auburn waves: adult woman in her mid-20s, fair skin tone, wavy hair, average build.
+- `p072.jpg` — Side braid: adult woman in her mid-20s, warm beige skin tone, braid hair, average build.
+- `p073.jpg` — Pastel-pink waves: adult woman in her mid-20s, fair skin tone, wavy hair, average build.
+- `p074.jpg` — Long black hair: adult woman in her mid-20s, tan skin tone, long hair, average build.
+- `p075.jpg` — Honey-blonde waves: adult woman in her mid-20s, fair skin tone, wavy hair, average build.
+- `p076.jpg` — Black waves: adult woman in her mid-20s, brown skin tone, wavy hair, average build.
+- `p077.jpg` — Lilac-silver braid: adult woman in her mid-20s, porcelain skin tone, braid hair, average build.
+- `p078.jpg` — Twin blonde braids: adult woman in her mid-20s, fair skin tone, braid hair, average build.
+- `p079.jpg` — Brunette with hair flowers: adult woman in her mid-20s, warm beige skin tone, long hair, average build.
+- `p080.jpg` — Chestnut waves: adult woman in her mid-20s, tan skin tone, wavy hair, average build.
+- `p081.jpg` — Red curls, freckles: adult woman in her mid-20s, porcelain skin tone, curls hair, average build, freckles.
+- `p082.jpg` — Black bob with fringe: adult woman in her mid-20s, fair skin tone, bob hair, average build.
+- `p083.jpg` — Highlighted waves: adult woman in her mid-20s, warm beige skin tone, wavy hair, average build.
+- `p084.jpg` — Natural afro: adult woman in her mid-20s, caramel skin tone, afro hair, average build.
+- `p085.jpg` — Salt-and-pepper curls: adult woman in her early 50s, brown skin tone, curls hair, average build.
+- `p086.jpg` — Long knotless braids: adult woman in her mid-20s, deep skin tone, boxbraids hair, average build.
+- `p087.jpg` — Buzz cut, vitiligo: adult woman in her mid-20s, deep skin tone, buzz hair, average build.
+- `p088.jpg` — Beaded locs: adult woman in her mid-20s, caramel skin tone, boxbraids hair, average build.
+- `p089.jpg` — Big afro: adult woman in her mid-20s, deep skin tone, afro hair, average build.
+- `p090.jpg` — Blonde braids: adult woman in her mid-20s, fair skin tone, boxbraids hair, average build.
+- `p091.jpg` — Silver pixie: adult woman in her early 50s, porcelain skin tone, pixie hair, average build.
+- `p092.jpg` — Lavender waves: adult woman in her mid-20s, fair skin tone, wavy hair, average build.
+- `p093.jpg` — Beaded braids: adult woman in her mid-20s, deep skin tone, boxbraids hair, average build.
+- `p094.jpg` — Black hair, silver streak: adult woman in her mid-20s, fair skin tone, long hair, average build.
+- `p095.jpg` — Copper curls: adult woman in her mid-20s, fair skin tone, curls hair, average build, freckles.
+- `p096.jpg` — Locs in a bun: adult woman in her mid-20s, brown skin tone, bun hair, average build.
+- `p097.jpg` — Straight blonde: adult woman in her mid-20s, porcelain skin tone, long hair, slender build.
+- `p098.jpg` — Sleek bun, athletic: adult woman in her mid-20s, tan skin tone, bun hair, athletic, toned build.
+- `p099.jpg` — Dark waves, curvy: adult woman in her mid-20s, warm beige skin tone, wavy hair, curvy build.
+- `p100.jpg` — Big curls, full-figured: adult woman in her mid-20s, brown skin tone, curls hair, full-figured, plus-size build.
+- `p101.jpg` — Red side braid: adult woman in her mid-20s, porcelain skin tone, braid hair, slender build, freckles.
+- `p102.jpg` — Afro, full-figured: adult woman in her mid-20s, brown skin tone, afro hair, full-figured, plus-size build.
+- `p103.jpg` — Blue buzz, athletic: adult woman in her mid-20s, caramel skin tone, buzz hair, athletic, toned build.
+- `p104.jpg` — Copper curls, glasses: adult woman in her late 30s, tan skin tone, curls hair, full-figured, plus-size build.
+- `p105.jpg` — Golden-blonde layers: adult woman in her mid-20s, fair skin tone, long hair, average build.
+- `p106.jpg` — Dark waves: adult woman in her late 30s, warm beige skin tone, wavy hair, average build.
+- `p107.jpg` — Dark waves with flower: adult woman in her late 30s, warm beige skin tone, wavy hair, average build.
+- `p108.jpg` — Brunette waves: adult woman in her late 30s, warm beige skin tone, wavy hair, average build.
+- `p109.jpg` — Long dark waves: adult woman in her late 30s, warm beige skin tone, wavy hair, average build.
+- `p110.jpg` — Blonde waves, smiling: adult woman in her late 30s, fair skin tone, wavy hair, average build.
+- `p111.jpg` — Brunette with fringe: adult woman in her early 50s, warm beige skin tone, wavy hair, average build.
+- `p112.jpg` — Auburn waves: adult woman in her early 50s, warm beige skin tone, wavy hair, average build.
+- `p113.jpg` — Silver-blonde waves: adult woman in her late 60s, fair skin tone, wavy hair, average build.
+- `p114.jpg` — Silver curls: adult woman in her late 60s, porcelain skin tone, wavy hair, average build.
